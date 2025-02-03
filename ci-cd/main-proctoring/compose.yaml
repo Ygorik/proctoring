@@ -1,0 +1,38 @@
+version: "3.11"
+services:
+  db:
+    image: postgres:16.3
+    env_file: ../../.env
+    ports:
+      - 3020:5432
+    networks:
+      - "dnd"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+
+  back_app:
+    build:
+      context: ../../
+      dockerfile: /ci-cd/main-proctoring/Dockerfile
+    env_file:
+      - ../../.env
+    ports:
+      - 3010:9000
+    volumes:
+      - ../../:/proctoring
+    networks:
+      - "dnd"
+    depends_on:
+      - db
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 500M
+
+networks:
+  dnd:
+    name: "dnd"
