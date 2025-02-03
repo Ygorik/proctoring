@@ -28,4 +28,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    pass
+    op.execute(
+        sa.text(
+            "DELETE FROM role WHERE name=admin;"
+        )
+    )

@@ -6,7 +6,7 @@ from src.config import settings
 
 
 class Cryptographer:
-    def __init__(self, key: bytes = settings.CRYPTO_KEY):
+    def __init__(self, key: bytes | str):
         self.fernet = Fernet(key=key)
 
     def encrypt(self, data: str) -> str:
