@@ -1,8 +1,6 @@
-import os
 
 from cryptography.fernet import Fernet
 
-from src.config import settings
 
 
 class Cryptographer:

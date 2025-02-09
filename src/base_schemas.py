@@ -23,7 +23,9 @@ class BaseBackendError(HTTPException):
 
 
 class BaseResponseSchemas(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, alias_generator=to_camel)
+    model_config = ConfigDict(
+        populate_by_name=True, alias_generator=to_camel, from_attributes=True
+    )
 
 
 class UserFromDB(BaseResponseSchemas):
