@@ -5,6 +5,7 @@ Revises: f93c87c73e6c
 Create Date: 2024-12-21 14:07:32.270939
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
@@ -28,8 +29,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        sa.text(
-            "DELETE FROM role WHERE name=admin;"
-        )
-    )
+    op.execute(sa.text("DELETE FROM role WHERE name=admin;"))

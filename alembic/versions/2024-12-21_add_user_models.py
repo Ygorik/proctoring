@@ -25,12 +25,30 @@ def upgrade() -> None:
         "role",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("rights_create", sa.Boolean(), server_default="FALSE", nullable=False),
+        sa.Column(
+            "rights_create", sa.Boolean(), server_default="FALSE", nullable=False
+        ),
         sa.Column("rights_read", sa.Boolean(), server_default="FALSE", nullable=False),
-        sa.Column("rights_update", sa.Boolean(), server_default="FALSE", nullable=False),
-        sa.Column("rights_delete", sa.Boolean(), server_default="FALSE", nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
-        sa.Column("updated_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
+        sa.Column(
+            "rights_update", sa.Boolean(), server_default="FALSE", nullable=False
+        ),
+        sa.Column(
+            "rights_delete", sa.Boolean(), server_default="FALSE", nullable=False
+        ),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -46,8 +64,20 @@ def upgrade() -> None:
         sa.Column("hashed_password", sa.String(), nullable=False),
         sa.Column("full_name", sa.String(), nullable=False),
         sa.Column("role_id", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
-        sa.Column("updated_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(
             ["role_id"],
             ["role.id"],
@@ -58,8 +88,20 @@ def upgrade() -> None:
         "authorization",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
-        sa.Column("updated_at", sa.DateTime(), server_default="NOW()", default="NOW()", nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            server_default="NOW()",
+            default="NOW()",
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(
             ["user_id"],
             ["user.id"],
