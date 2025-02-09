@@ -1,4 +1,5 @@
 from src.base_schemas import Token, User
+from src.config import settings
 from src.services.authorization.db_service import AuthorizeDBService
 from src.services.authorization.exceptions import (
     UserNotFoundError,
@@ -15,7 +16,7 @@ class AuthorizeService:
     ) -> None:
         self.authorize_db_service = authorize_db_service
         self.token_service = token_service
-        self.cryptographer = Cryptographer()
+        self.cryptographer = Cryptographer(settings.CRYPTO_KEY)
 
     async def authorize_user(self, *, authorization_data: AuthorizationSchema) -> Token:
         user_db = await self.authorize_db_service.get_user_by_login(

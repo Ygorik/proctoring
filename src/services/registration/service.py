@@ -1,4 +1,5 @@
 from src.base_schemas import Token, User
+from src.config import settings
 from src.services.token.service import TokenService
 from src.services.registration.db_service import RegisterDBService
 from src.services.registration.exceptions import FieldAlreadyUseError
@@ -12,7 +13,7 @@ class RegisterService:
     ) -> None:
         self.register_db_service = register_db_service
         self.token_service = token_service
-        self.cryptographer = Cryptographer()
+        self.cryptographer = Cryptographer(settings.CRYPTO_KEY)
 
     async def register_user(self, *, register_data: RegisterData) -> Token:
         await self.validate_register_data(register_data=register_data)
