@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, Query
 from starlette import status
 
+from src.services.authorization.schemas import User
 from src.services.role.dependencies import role_service_dependency
 from src.services.role.schemas import CreateRoleSchema, RoleItemSchema, PatchRoleSchema
 from src.services.role.service import RoleService
+from src.services.token.service import decode_user_token
 
 router = APIRouter()
 
@@ -19,8 +21,9 @@ async def create_role(
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_list_of_roles(
     role_service: RoleService = Depends(role_service_dependency),
+    user: User = Depends(decode_user_token)
 ) -> list[RoleItemSchema]:
-    return await role_service.get_list_of_roles()
+    return await role_service.get_list_of_roles(user=user)
 
 
 @router.patch("/{roleId}", status_code=status.HTTP_200_OK)

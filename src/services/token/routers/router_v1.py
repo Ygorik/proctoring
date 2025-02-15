@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.base_schemas import User
+from src.services.authorization.schemas import User
 from src.services.token.service import decode_user_token
 
 router = APIRouter()

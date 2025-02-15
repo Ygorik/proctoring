@@ -1,6 +1,8 @@
+from src.services.authorization.schemas import User
 from src.services.role.db_service import RoleDBService
 from src.services.role.exceptions import RoleNotFoundError
 from src.services.role.schemas import CreateRoleSchema, RoleItemSchema, PatchRoleSchema
+from src.utils.role_checker import check_read_rights
 
 
 class RoleService:
@@ -10,7 +12,8 @@ class RoleService:
     async def create_role(self, *, role_data: CreateRoleSchema) -> None:
         await self.role_db_service.insert_role(role_data)
 
-    async def get_list_of_roles(self) -> list[RoleItemSchema]:
+    @check_read_rights  # TODO Не работает
+    async def get_list_of_roles(self, *, user: User) -> list[RoleItemSchema]:  # noqa ARG001
         return [
             RoleItemSchema.from_orm(role)
             for role in await self.role_db_service.get_list_of_roles()

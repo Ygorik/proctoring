@@ -1,6 +1,4 @@
-
 from cryptography.fernet import Fernet
-
 
 
 class Cryptographer:

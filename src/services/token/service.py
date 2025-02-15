@@ -3,8 +3,8 @@ from datetime import timedelta, datetime, timezone
 import jwt
 from jwt import InvalidTokenError
 
+from src.services.authorization.schemas import User, Token
 from src.services.token.exceptions import WrongTokenError
-from src.base_schemas import User, Token
 from src.config import settings
 
 

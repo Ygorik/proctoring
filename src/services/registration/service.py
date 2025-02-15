@@ -1,5 +1,6 @@
-from src.base_schemas import Token, User
+
 from src.config import settings
+from src.services.authorization.schemas import Token, User
 from src.services.token.service import TokenService
 from src.services.registration.db_service import RegisterDBService
 from src.services.registration.exceptions import FieldAlreadyUseError

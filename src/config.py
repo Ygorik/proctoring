@@ -4,11 +4,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file="../.env")
 
-    POSTGRES_DB: str = "dnd"
+    POSTGRES_DB: str = "proctoring"
     POSTGRES_USER: str = "user"
     POSTGRES_PASSWORD: str = "password"
-    DB_HOST: str = "localhost"
-    DP_PORT: str = "3020"
+    DB_HOST: str = "db"
+    DP_PORT: str = "5432"
 
     @property
     def db_url(self) -> str:
