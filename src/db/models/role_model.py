@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.models.base_model import BaseDBMixin, BaseDB
 
@@ -11,3 +11,5 @@ class RoleDB(BaseDB, BaseDBMixin):
     rights_read: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
     rights_update: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
     rights_delete: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
+
+    user: Mapped["UserDB"] = relationship(back_populates="role")

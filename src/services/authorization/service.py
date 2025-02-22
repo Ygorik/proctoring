@@ -1,11 +1,10 @@
-from src.base_schemas import Token, User
 from src.config import settings
 from src.services.authorization.db_service import AuthorizeDBService
 from src.services.authorization.exceptions import (
     UserNotFoundError,
     WrongPasswordError,
 )
-from src.services.authorization.schemas import AuthorizationSchema
+from src.services.authorization.schemas import AuthorizationSchema, Token, User
 from src.services.token.service import TokenService
 from src.utils.cryptographer import Cryptographer
 
@@ -39,6 +38,7 @@ class AuthorizeService:
                 user=User(
                     id=str(user_db.id),
                     login=user_db.login,
+                    role=user_db.role
                 )
             )
         )

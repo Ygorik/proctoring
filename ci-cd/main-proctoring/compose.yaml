@@ -16,7 +16,7 @@ services:
   back_app:
     build:
       context: ../../
-      dockerfile: /ci-cd/main-proctoring/Dockerfile
+      dockerfile: /ci-cd/main-proctoring/Dockerfile  # drop first / if u using linux
     env_file:
       - ../../.env
     ports:

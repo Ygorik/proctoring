@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.base_schemas import Token
+from src.services.authorization.schemas import Token
 from src.services.registration.dependencies import register_service_dependency
 from src.services.registration.schemas import RegisterData
 from src.services.registration.service import RegisterService

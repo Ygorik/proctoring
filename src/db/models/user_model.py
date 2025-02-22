@@ -20,3 +20,4 @@ class UserDB(BaseDB, BaseDBMixin):
     role_id: Mapped[int] = mapped_column(ForeignKey("role.id"))
 
     authorization: Mapped["AuthorizationDB"] = relationship(back_populates="user")
+    role: Mapped["RoleDB"] = relationship(back_populates="user")

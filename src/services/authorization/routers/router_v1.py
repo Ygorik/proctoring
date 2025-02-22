@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from starlette import status
 
-from src.base_schemas import Token
+
 from src.services.authorization.dependencies import authorize_service_dependency
-from src.services.authorization.schemas import AuthorizationSchema
+from src.services.authorization.schemas import AuthorizationSchema, Token
 from src.services.authorization.service import AuthorizeService
 
 
