@@ -1,8 +1,12 @@
-from src.services.authorization.schemas import User
 from src.services.role.db_service import RoleDBService
-from src.services.role.exceptions import RoleNotFoundError
+from src.services.role.exceptions import RoleNotFoundError, UserHaveRoleError
 from src.services.role.schemas import CreateRoleSchema, RoleItemSchema, PatchRoleSchema
-from src.utils.role_checker import check_read_rights, check_delete_rights, check_update_rights, check_create_rights
+from src.utils.role_checker import (
+    check_read_rights,
+    check_delete_rights,
+    check_update_rights,
+    check_create_rights,
+)
 
 
 class RoleService:
@@ -16,7 +20,7 @@ class RoleService:
     @check_read_rights
     async def get_list_of_roles(self) -> list[RoleItemSchema]:
         return [
-            RoleItemSchema.from_orm(role)
+            RoleItemSchema.model_validate(role)
             for role in await self.role_db_service.get_list_of_roles()
         ]
 
@@ -31,10 +35,11 @@ class RoleService:
 
     @check_delete_rights
     async def delete_role_by_id(self, *, role_id: int) -> None:
-        await self.get_role_by_id_if_exist(role_id=role_id)
+        if await self.role_db_service.check_user_have_role(role_id=role_id):
+            raise UserHaveRoleError
         await self.role_db_service.delete_role_by_id(role_id=role_id)
 
     async def get_role_by_id_if_exist(self, *, role_id) -> RoleItemSchema:
         if role := await self.role_db_service.get_role_by_id(role_id=role_id):
-            return RoleItemSchema.from_orm(role)
+            return RoleItemSchema.model_validate(role)
         raise RoleNotFoundError
