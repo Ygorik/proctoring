@@ -35,10 +35,6 @@ class AuthorizeService:
 
         return Token(
             token=await self.token_service.create_user_token(
-                user=User(
-                    id=str(user_db.id),
-                    login=user_db.login,
-                    role=user_db.role
-                )
+                user=User(id=str(user_db.id), login=user_db.login, role=user_db.role)
             )
         )

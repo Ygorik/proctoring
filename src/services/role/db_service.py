@@ -3,7 +3,7 @@ from typing import Sequence
 from sqlalchemy import insert, select, update, delete
 
 from src.db.base_db_service import BaseDBService
-from src.db.models import RoleDB
+from src.db.models import RoleDB, UserDB
 from src.services.role.schemas import CreateRoleSchema, PatchRoleSchema
 
 
@@ -21,10 +21,18 @@ class RoleDBService(BaseDBService):
         async with self.get_async_session() as sess:
             await sess.execute(
                 update(RoleDB)
-                .values(**role_data.dict(exclude_unset=True))
+                .values(**role_data.model_dump(exclude_unset=True))
                 .where(RoleDB.id == role_id)
             )
             await sess.commit()
+
+    async def check_user_have_role(self, *, role_id: int) -> bool:
+        async with self.get_async_session() as sess:
+            return bool(
+                await sess.scalar(
+                    select(UserDB.id).join(RoleDB).where(RoleDB.id == role_id)
+                )
+            )
 
     async def delete_role_by_id(self, *, role_id: int) -> None:
         async with self.get_async_session() as sess:
