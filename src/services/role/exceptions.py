@@ -17,7 +17,7 @@ class RoleNotFoundError(BaseBackendError):
 class UserCanNotReadError(BaseBackendError):
     def __init__(
         self,
-        message: str | None = "У данного пользователя не прав чтения.",
+        message: str | None = "У данного пользователя нет прав чтения.",
         data: list | None = None,
     ) -> None:
         super().__init__(
@@ -28,7 +28,7 @@ class UserCanNotReadError(BaseBackendError):
 class UserCanNotCreateError(BaseBackendError):
     def __init__(
         self,
-        message: str | None = "У данного пользователя не прав создания.",
+        message: str | None = "У данного пользователя нет прав создания.",
         data: list | None = None,
     ) -> None:
         super().__init__(
@@ -39,7 +39,7 @@ class UserCanNotCreateError(BaseBackendError):
 class UserCanNotUpdateError(BaseBackendError):
     def __init__(
         self,
-        message: str | None = "У данного пользователя не прав обновления.",
+        message: str | None = "У данного пользователя нет прав обновления.",
         data: list | None = None,
     ) -> None:
         super().__init__(
@@ -50,7 +50,7 @@ class UserCanNotUpdateError(BaseBackendError):
 class UserCanNotDeleteError(BaseBackendError):
     def __init__(
         self,
-        message: str | None = "У данного пользователя не прав удаления.",
+        message: str | None = "У данного пользователя нет прав удаления.",
         data: list | None = None,
     ) -> None:
         super().__init__(
