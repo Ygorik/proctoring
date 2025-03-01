@@ -37,6 +37,9 @@ class RoleService:
     async def delete_role_by_id(self, *, role_id: int) -> None:
         if await self.role_db_service.check_user_have_role(role_id=role_id):
             raise UserHaveRoleError
+
+        await self.get_role_by_id_if_exist(role_id=role_id)
+
         await self.role_db_service.delete_role_by_id(role_id=role_id)
 
     async def get_role_by_id_if_exist(self, *, role_id) -> RoleItemSchema:
