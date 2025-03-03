@@ -1,5 +1,5 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from src.db.models.base_model import BaseDBMixin, BaseDB
 
@@ -16,5 +16,3 @@ class SubjectUserDB(BaseDB):
     id: Mapped[int] = mapped_column(primary_key=True)
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-
-

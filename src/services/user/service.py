@@ -11,7 +11,12 @@ from src.services.user.schemas import (
     PatchUserData,
 )
 from src.utils.cryptographer import Cryptographer
-from src.utils.role_checker import check_create_rights, check_read_rights, check_update_rights, check_delete_rights
+from src.utils.role_checker import (
+    check_create_rights,
+    check_read_rights,
+    check_update_rights,
+    check_delete_rights,
+)
 
 
 class UserService:
@@ -41,7 +46,8 @@ class UserService:
 
         if (
             register_data.role_id
-            and await self.role_db_service.get_role_by_id(role_id=register_data.role_id) is None
+            and await self.role_db_service.get_role_by_id(role_id=register_data.role_id)
+            is None
         ):
             raise RoleNotFoundError
 
@@ -78,3 +84,7 @@ class UserService:
         if user := await self.user_db_service.get_user_by_id(user_id=user_id):
             return user
         raise UserNotFoundError
+
+    @check_read_rights
+    async def get_subject_users(self, *, subject_id: int) -> list[UserItem]:
+        return await self.user_db_service.get_users_by_subject_id(subject_id=subject_id)
