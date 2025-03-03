@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from starlette import status
 
 from src.services.authorization.schemas import User
@@ -32,6 +32,15 @@ async def get_list_of_users(
     return await user_service.get_list_of_users(user=user)
 
 
+@router.get("/subjectUsers", status_code=status.HTTP_200_OK)
+async def get_subject_users(
+    subject_id: int = Query(alias="subjectId"),
+    user_service: UserService = Depends(user_service_dependency),
+    user: User = Depends(decode_user_token),
+) -> list[UserItemForList]:
+    return await user_service.get_subject_users(user=user, subject_id=subject_id)
+
+
 @router.get("/{userId}", status_code=status.HTTP_200_OK)
 async def get_user_by_id(
     user_id: str = Path(alias="userId"),
@@ -49,6 +58,7 @@ async def patch_user_by_id(
     user: User = Depends(decode_user_token),
 ) -> None:
     await user_service.patch_user_by_id(user=user, user_id=user_id, user_data=user_data)
+
 
 @router.delete("/{userId}", status_code=status.HTTP_200_OK)
 async def delete_user_by_id(

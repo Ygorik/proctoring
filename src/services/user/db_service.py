@@ -8,7 +8,7 @@ from src.services.user.schemas import (
     PatchUserData,
 )
 from src.db.base_db_service import BaseDBService
-from src.db.models import UserDB, RoleDB
+from src.db.models import UserDB, RoleDB, SubjectUserDB
 
 
 class UserDBService(BaseDBService):
@@ -51,13 +51,24 @@ class UserDBService(BaseDBService):
     async def patch_user_by_id(self, *, user_id: str, user_data: PatchUserData) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(
-                update(UserDB).values(**user_data.model_dump(exclude={"password"}, exclude_unset=True)).where(UserDB.id == user_id)
+                update(UserDB)
+                .values(
+                    **user_data.model_dump(exclude={"password"}, exclude_unset=True)
+                )
+                .where(UserDB.id == user_id)
             )
             await sess.commit()
 
     async def delete_user_by_id(self, *, user_id: str) -> None:
         async with self.get_async_session() as sess:
-            await sess.execute(
-                delete(UserDB).where(UserDB.id == user_id)
-            )
+            await sess.execute(delete(UserDB).where(UserDB.id == user_id))
             await sess.commit()
+
+    async def get_users_by_subject_id(self, *, subject_id: int) -> list[UserItem]:
+        async with self.get_async_session() as sess:
+            return await sess.scalars(
+                select(UserDB)
+                .join(SubjectUserDB)
+                .where(SubjectUserDB.subject_id == subject_id)
+                .where(SubjectUserDB.user_id == UserDB.id)
+            )

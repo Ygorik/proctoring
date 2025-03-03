@@ -9,6 +9,7 @@ class SubjectSchema(BaseResponseSchemas):
     id: int
     name: str
 
+
 class SubjectListItemSchema(BaseResponseSchemas):
     id: int
     name: str
@@ -16,3 +17,13 @@ class SubjectListItemSchema(BaseResponseSchemas):
 
 class PatchSubjectSchema(BaseResponseSchemas):
     name: str
+
+
+class AssignSubjectSchema(BaseResponseSchemas):
+    subject_id: int
+    user_id: str
+
+
+class UnassignSubjectSchema(BaseResponseSchemas):
+    subject_id: int
+    user_id: str
