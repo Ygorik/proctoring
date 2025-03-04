@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from starlette import status
 
 from src.services.authorization.schemas import User
@@ -29,7 +29,7 @@ async def get_list_of_roles(
 
 @router.get("/{roleId}", status_code=status.HTTP_200_OK)
 async def get_role(
-    role_id: int,
+    role_id: int = Path(alias="roleId"),
     role_service: RoleService = Depends(role_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> RoleItemSchema:
@@ -39,7 +39,7 @@ async def get_role(
 @router.patch("/{roleId}", status_code=status.HTTP_200_OK)
 async def patch_role(
     role_data: PatchRoleSchema,
-    role_id: int,
+    role_id: int = Path(alias="roleId"),
     role_service: RoleService = Depends(role_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:
@@ -48,7 +48,7 @@ async def patch_role(
 
 @router.delete("/{roleId}", status_code=status.HTTP_200_OK)
 async def delete_role(
-    role_id: int,
+    role_id: int = Path(alias="roleId"),
     role_service: RoleService = Depends(role_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:
