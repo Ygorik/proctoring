@@ -21,3 +21,4 @@ class UserDB(BaseDB, BaseDBMixin):
 
     authorization: Mapped["AuthorizationDB"] = relationship(back_populates="user")
     role: Mapped["RoleDB"] = relationship(back_populates="user")
+    proctoring: Mapped["ProctoringDB"] = relationship(back_populates="user")
