@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, Path
 from starlette import status
 
 from src.services.authorization.schemas import User
@@ -94,7 +94,7 @@ async def get_list_of_proctoring(
 
 
 @router.get("/{proctoringId}", status_code=status.HTTP_200_OK)
-async def get_proctoring(
+async def get_proctoring_by_id(
     proctoring_id: int = Path(alias="proctoringId"),
     proctoring_service: ProctoringService = Depends(proctoring_service_dependency),
     user: User = Depends(decode_user_token),

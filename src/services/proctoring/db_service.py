@@ -2,7 +2,7 @@ from sqlalchemy import insert, select, update, delete, Select
 from sqlalchemy.orm import selectinload
 
 from src.db.base_db_service import BaseDBService
-from src.db.models import ProctoringDB, ProctoringTypeDB, SubjectDB, UserDB
+from src.db.models import ProctoringDB, ProctoringTypeDB
 from src.services.proctoring.schemas import (
     CreateProctoringSchema,
     ProctoringItemSchema,

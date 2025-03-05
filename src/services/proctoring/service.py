@@ -106,7 +106,9 @@ class ProctoringService:
                 user_name=orm.user.full_name,
                 subject_name=orm.subject.name,
             )
-            for orm in await self.proctoring_db_service.get_list_of_proctoring(filters=filters)
+            for orm in await self.proctoring_db_service.get_list_of_proctoring(
+                filters=filters
+            )
         ]
 
     @check_read_rights
