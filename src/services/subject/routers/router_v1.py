@@ -10,6 +10,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    SubjectFilters,
 )
 from src.services.subject.service import SubjectService
 from src.services.token.service import decode_user_token
@@ -28,12 +29,11 @@ async def create_subject(
 
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_list_of_subjects(
+    filters: SubjectFilters = Depends(),
     service: SubjectService = Depends(subject_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> list[SubjectListItemSchema]:
-    return await service.get_list_of_subjects(
-        user=user,
-    )
+    return await service.get_list_of_subjects(user=user, filters=filters)
 
 
 @router.patch("/{subject_id}", status_code=status.HTTP_200_OK)
@@ -64,14 +64,6 @@ async def unassign_subject_from_user(
     user: User = Depends(decode_user_token),
 ) -> None:
     await service.unassign_subject_from_user(user=user, unassign_data=unassign_data)
-
-
-@router.get("/userSubjects", status_code=status.HTTP_200_OK)
-async def get_user_subjects(
-    service: SubjectService = Depends(subject_service_dependency),
-    user: User = Depends(decode_user_token),
-) -> list[SubjectListItemSchema]:
-    return await service.get_user_subjects(user=user, user_id=user.id)
 
 
 @router.get("/{subject_id}", status_code=status.HTTP_200_OK)

@@ -79,8 +79,7 @@ class ProctoringDBService(BaseDBService):
             selectinload(ProctoringDB.subject),
         )
 
-        if filters:
-            stmt = self.filter_proctoring_list(stmt=stmt, filters=filters)
+        stmt = self.filter_proctoring_list(stmt=stmt, filters=filters)
 
         async with self.get_async_session() as sess:
             return await sess.scalars(stmt)

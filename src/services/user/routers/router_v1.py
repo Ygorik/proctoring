@@ -8,6 +8,7 @@ from src.services.user.schemas import (
     UserItemForList,
     UserItem,
     PatchUserData,
+    UserFilters,
 )
 from src.services.user.service import UserService
 from src.services.token.service import decode_user_token
@@ -26,24 +27,16 @@ async def user_new_user(
 
 @router.get("", status_code=status.HTTP_200_OK)
 async def get_list_of_users(
+    filters: UserFilters = Depends(),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> list[UserItemForList]:
-    return await user_service.get_list_of_users(user=user)
-
-
-@router.get("/subjectUsers", status_code=status.HTTP_200_OK)
-async def get_subject_users(
-    subject_id: int = Query(alias="subjectId"),
-    user_service: UserService = Depends(user_service_dependency),
-    user: User = Depends(decode_user_token),
-) -> list[UserItemForList]:
-    return await user_service.get_subject_users(user=user, subject_id=subject_id)
+    return await user_service.get_list_of_users(user=user, filters=filters)
 
 
 @router.get("/{userId}", status_code=status.HTTP_200_OK)
 async def get_user_by_id(
-    user_id: str = Path(alias="userId"),
+    user_id: int = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> UserItem:
@@ -53,7 +46,7 @@ async def get_user_by_id(
 @router.patch("/{userId}", status_code=status.HTTP_200_OK)
 async def patch_user_by_id(
     user_data: PatchUserData,
-    user_id: str = Path(alias="userId"),
+    user_id: int = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:
@@ -62,7 +55,7 @@ async def patch_user_by_id(
 
 @router.delete("/{userId}", status_code=status.HTTP_200_OK)
 async def delete_user_by_id(
-    user_id: str = Path(alias="userId"),
+    user_id: int = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:

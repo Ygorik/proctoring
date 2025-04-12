@@ -1,3 +1,5 @@
+from fastapi import UploadFile
+
 from src.services.authorization.exceptions import UserNotFoundError
 from src.services.proctoring.db_service import ProctoringDBService
 from src.services.proctoring.exceptions import ProctoringNotFoundError
@@ -157,7 +159,7 @@ class ProctoringService:
             )
         raise ProctoringNotFoundError
 
-    async def get_user_by_id_if_exist(self, *, user_id: str) -> UserItem:
+    async def get_user_by_id_if_exist(self, *, user_id: int) -> UserItem:
         if user := await self.user_db_service.get_user_by_id(user_id=user_id):
             return user
         raise UserNotFoundError
@@ -168,3 +170,9 @@ class ProctoringService:
         ):
             return subject
         raise SubjectNotFoundError
+
+    async def check_image(self, *, image: UploadFile):
+        if image.content_type.split("/")[0] != "image":
+            raise ...
+
+

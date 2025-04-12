@@ -7,6 +7,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    SubjectFilters,
 )
 from src.services.user.service import UserService
 
@@ -41,8 +42,10 @@ class SubjectService:
         raise SubjectNotFoundError
 
     @check_read_rights
-    async def get_list_of_subjects(self) -> list[SubjectListItemSchema]:
-        return await self.subject_db_service.get_list_of_subjects()
+    async def get_list_of_subjects(
+        self, *, filters: SubjectFilters
+    ) -> list[SubjectListItemSchema]:
+        return await self.subject_db_service.get_list_of_subjects(filters=filters)
 
     @check_update_rights
     async def patch_subject_by_id(
@@ -72,7 +75,3 @@ class SubjectService:
         await self.subject_db_service.unassign_subject_from_user(
             unassign_data=unassign_data
         )
-
-    @check_read_rights
-    async def get_user_subjects(self, *, user_id: str) -> list[SubjectListItemSchema]:
-        return await self.subject_db_service.get_user_subjects(user_id=user_id)

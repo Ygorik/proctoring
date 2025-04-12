@@ -22,11 +22,11 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.execute(
         sa.text(
-            "INSERT INTO role (id, name, rights_create, rights_read, rights_update, rights_delete) "
-            "VALUES (1, 'admin', true, true, true, true);"
+            "INSERT INTO role (name, rights_create, rights_read, rights_update, rights_delete) "
+            "VALUES ('admin', true, true, true, true);"
         )
     )
 
 
 def downgrade() -> None:
-    op.execute(sa.text("DELETE FROM role WHERE name=admin;"))
+    op.execute(sa.text("DELETE FROM role WHERE name='admin';"))
