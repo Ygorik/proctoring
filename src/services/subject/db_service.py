@@ -1,7 +1,7 @@
-from sqlalchemy import insert, select, update, delete
+from sqlalchemy import insert, select, update, delete, Select
 
 from src.db.base_db_service import BaseDBService
-from src.db.models import SubjectDB, SubjectUserDB
+from src.db.models import SubjectDB, SubjectUserDB, UserDB
 from src.services.subject.schemas import (
     CreateSubjectSchema,
     SubjectSchema,
@@ -9,6 +9,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    SubjectFilters,
 )
 
 
@@ -24,9 +25,24 @@ class SubjectDBService(BaseDBService):
                 select(SubjectDB).where(SubjectDB.id == subject_id)
             )
 
-    async def get_list_of_subjects(self) -> list[SubjectListItemSchema]:
+    async def get_list_of_subjects(
+        self, *, filters: SubjectFilters
+    ) -> list[SubjectListItemSchema]:
+        stmt = select(SubjectDB)
+
+        stmt = self.filter_user_list(stmt=stmt, filters=filters)
+
         async with self.get_async_session() as sess:
-            return await sess.scalars(select(SubjectDB))
+            return await sess.scalars(stmt)
+
+    @staticmethod
+    async def filter_user_list(*, stmt: Select, filters: SubjectFilters) -> Select:
+        if filters.user_id:
+            stmt = stmt.join(
+                SubjectUserDB, SubjectUserDB.subject_id == SubjectDB.id
+            ).where(SubjectUserDB.user_id == filters.user_id)
+
+        return stmt
 
     async def update_subject(
         self, *, subject_data: PatchSubjectSchema, subject_id: int
@@ -60,11 +76,3 @@ class SubjectDBService(BaseDBService):
                 )
             )
             await sess.commit()
-
-    async def get_user_subjects(self, *, user_id: str) -> list[SubjectListItemSchema]:
-        async with self.get_async_session() as sess:
-            return await sess.scalars(
-                select(SubjectDB)
-                .join(SubjectUserDB, SubjectUserDB.subject_id == SubjectDB.id)
-                .where(SubjectUserDB.user_id == user_id)
-            )

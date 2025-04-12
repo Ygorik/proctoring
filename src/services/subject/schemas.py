@@ -1,3 +1,5 @@
+from fastapi import Query
+
 from src.base_schemas import BaseResponseSchemas
 
 
@@ -21,9 +23,17 @@ class PatchSubjectSchema(BaseResponseSchemas):
 
 class AssignSubjectSchema(BaseResponseSchemas):
     subject_id: int
-    user_id: str
+    user_id: int
 
 
 class UnassignSubjectSchema(BaseResponseSchemas):
     subject_id: int
-    user_id: str
+    user_id: int
+
+
+class SubjectFilters:
+    def __init__(
+        self,
+        user_id: int | None = Query(default=None, alias="userId"),
+    ):
+        self.user_id = user_id

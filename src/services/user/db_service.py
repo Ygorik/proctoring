@@ -1,4 +1,4 @@
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import select, insert, update, delete, Select
 from sqlalchemy.orm import load_only, selectinload
 
 from src.services.user.schemas import (
@@ -6,6 +6,7 @@ from src.services.user.schemas import (
     UserItemForList,
     UserItem,
     PatchUserData,
+    UserFilters,
 )
 from src.db.base_db_service import BaseDBService
 from src.db.models import UserDB, RoleDB, SubjectUserDB
@@ -24,13 +25,26 @@ class UserDBService(BaseDBService):
                 insert(UserDB).values(**register_data.model_dump(exclude={"password"}))
             )
 
-    async def get_list_of_users(self) -> list[UserItemForList]:
+    async def get_list_of_users(self, *, filters: UserFilters) -> list[UserItemForList]:
+        stmt = select(UserDB).options(
+            load_only(UserDB.id, UserDB.full_name, UserDB.login)
+        )
+
+        stmt = self.filter_user_list(stmt=stmt, filters=filters)
+
         async with self.get_async_session() as sess:
-            return await sess.scalars(
-                select(UserDB).options(
-                    load_only(UserDB.id, UserDB.full_name, UserDB.login)
-                )
+            return await sess.scalars(stmt)
+
+    @staticmethod
+    def filter_user_list(*, stmt: Select, filters: UserFilters) -> Select:
+        if filters.subject_id:
+            stmt = stmt.join(SubjectUserDB).where(
+                SubjectUserDB.subject_id == filters.subject_id
             )
+        if filters.role_id:
+            stmt = stmt.where(UserDB.role_id == filters.role_id)
+
+        return stmt
 
     async def get_user_by_id(self, *, user_id) -> UserItem:
         async with self.get_async_session() as sess:
@@ -48,7 +62,7 @@ class UserDBService(BaseDBService):
                 .where(UserDB.id == user_id)
             )
 
-    async def patch_user_by_id(self, *, user_id: str, user_data: PatchUserData) -> None:
+    async def patch_user_by_id(self, *, user_id: int, user_data: PatchUserData) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(
                 update(UserDB)
@@ -59,16 +73,7 @@ class UserDBService(BaseDBService):
             )
             await sess.commit()
 
-    async def delete_user_by_id(self, *, user_id: str) -> None:
+    async def delete_user_by_id(self, *, user_id: int) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(delete(UserDB).where(UserDB.id == user_id))
             await sess.commit()
-
-    async def get_users_by_subject_id(self, *, subject_id: int) -> list[UserItem]:
-        async with self.get_async_session() as sess:
-            return await sess.scalars(
-                select(UserDB)
-                .join(SubjectUserDB)
-                .where(SubjectUserDB.subject_id == subject_id)
-                .where(SubjectUserDB.user_id == UserDB.id)
-            )

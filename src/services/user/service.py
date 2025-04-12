@@ -9,6 +9,7 @@ from src.services.user.schemas import (
     UserItemForList,
     UserItem,
     PatchUserData,
+    UserFilters,
 )
 from src.utils.cryptographer import Cryptographer
 from src.utils.role_checker import (
@@ -52,15 +53,15 @@ class UserService:
             raise RoleNotFoundError
 
     @check_read_rights
-    async def get_list_of_users(self) -> list[UserItemForList]:
-        return await self.user_db_service.get_list_of_users()
+    async def get_list_of_users(self, *, filters: UserFilters) -> list[UserItemForList]:
+        return await self.user_db_service.get_list_of_users(filters=filters)
 
     @check_read_rights
-    async def get_user_by_id(self, *, user_id: str) -> UserItem:
+    async def get_user_by_id(self, *, user_id: int) -> UserItem:
         return await self.get_user_by_id_if_exist(user_id=user_id)
 
     @check_update_rights
-    async def patch_user_by_id(self, *, user_id: str, user_data: PatchUserData) -> None:
+    async def patch_user_by_id(self, *, user_id: int, user_data: PatchUserData) -> None:
         if user_data.password:
             user_data.hashed_password = self.cryptographer.encrypt(user_data.password)
 
@@ -76,15 +77,11 @@ class UserService:
         )
 
     @check_delete_rights
-    async def delete_user_by_id(self, *, user_id: str) -> None:
+    async def delete_user_by_id(self, *, user_id: int) -> None:
         await self.get_user_by_id_if_exist(user_id=user_id)
         await self.user_db_service.delete_user_by_id(user_id=user_id)
 
-    async def get_user_by_id_if_exist(self, *, user_id: str):
+    async def get_user_by_id_if_exist(self, *, user_id: int):
         if user := await self.user_db_service.get_user_by_id(user_id=user_id):
             return user
         raise UserNotFoundError
-
-    @check_read_rights
-    async def get_subject_users(self, *, subject_id: int) -> list[UserItem]:
-        return await self.user_db_service.get_users_by_subject_id(subject_id=subject_id)

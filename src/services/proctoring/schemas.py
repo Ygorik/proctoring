@@ -4,7 +4,7 @@ from src.base_schemas import BaseResponseSchemas
 
 
 class CreateProctoringSchema(BaseResponseSchemas):
-    user_id: str
+    user_id: int
     subject_id: int
     type_id: int
 
@@ -46,7 +46,7 @@ class ProctoringItemSchema(BaseResponseSchemas):
 
 
 class PatchProctoringSchema(BaseResponseSchemas):
-    user_id: str
+    user_id: int
     subject_id: int
     type_id: int
 
@@ -54,7 +54,7 @@ class PatchProctoringSchema(BaseResponseSchemas):
 class ProctoringFilters:
     def __init__(
         self,
-        user_id: str | None = Query(default=None, alias="userId"),
+        user_id: int | None = Query(default=None, alias="userId"),
         subject_id: int | None = Query(default=None, alias="subjectId"),
         type_id: int | None = Query(default=None, alias="typeId"),
     ):
