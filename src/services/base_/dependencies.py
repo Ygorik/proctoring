@@ -1,6 +1,6 @@
 from fastapi import Depends
 
-from db.base_db_service import Session
+from src.db.base_db_service import Session
 from src.services.base_.db_service import DBService
 from src.services.base_.service import Service
 

@@ -53,13 +53,7 @@ def upgrade() -> None:
     )
     op.create_table(
         "user",
-        sa.Column(
-            "id",
-            sa.Uuid(),
-            server_default=sa.text("uuid_generate_v4()"),
-            default=sa.text("uuid_generate_v4()"),
-            nullable=False,
-        ),
+        sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("login", sa.String(), nullable=False),
         sa.Column("hashed_password", sa.String(), nullable=False),
         sa.Column("full_name", sa.String(), nullable=False),
@@ -87,7 +81,7 @@ def upgrade() -> None:
     op.create_table(
         "authorization",
         sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.Column(
             "created_at",
             sa.DateTime(),
