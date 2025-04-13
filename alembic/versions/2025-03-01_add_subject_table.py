@@ -33,7 +33,7 @@ def upgrade() -> None:
         "subject_user",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("subject_id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Uuid(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
         sa.ForeignKeyConstraint(
             ["subject_id"],
             ["subject.id"],

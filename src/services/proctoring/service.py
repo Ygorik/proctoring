@@ -1,6 +1,7 @@
 from fastapi import UploadFile
 
 from src.services.authorization.exceptions import UserNotFoundError
+from src.services.mediapipe.main import main
 from src.services.proctoring.db_service import ProctoringDBService
 from src.services.proctoring.exceptions import ProctoringNotFoundError
 from src.services.proctoring.schemas import (
@@ -174,5 +175,5 @@ class ProctoringService:
     async def check_image(self, *, image: UploadFile):
         if image.content_type.split("/")[0] != "image":
             raise ...
-
-
+        else:
+            main(image)
