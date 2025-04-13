@@ -35,6 +35,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.execute(
-        sa.text("DELETE FROM \"user\" WHERE login='admin';")
-    )
+    op.execute(sa.text("DELETE FROM \"user\" WHERE login='admin';"))

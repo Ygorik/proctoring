@@ -1,7 +1,7 @@
 from sqlalchemy import insert, select, update, delete, Select
 
 from src.db.base_db_service import BaseDBService
-from src.db.models import SubjectDB, SubjectUserDB, UserDB
+from src.db.models import SubjectDB, SubjectUserDB
 from src.services.subject.schemas import (
     CreateSubjectSchema,
     SubjectSchema,

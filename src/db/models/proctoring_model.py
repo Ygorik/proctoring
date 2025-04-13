@@ -10,13 +10,14 @@ class ProctoringDB(BaseDB, BaseDBMixin):
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     type_id: Mapped[int] = mapped_column(ForeignKey("proctoring_type.id"))
-    result: Mapped[str] = mapped_column(
-        nullable=True, default=None, server_default=None
-    )
+    result_id: Mapped[int] = mapped_column(ForeignKey("proctoring_result.id"))
 
     user: Mapped["UserDB"] = relationship(back_populates="proctoring")
     subject: Mapped["SubjectDB"] = relationship(back_populates="proctoring")
     proctoring_type: Mapped["ProctoringTypeDB"] = relationship(
+        back_populates="proctoring"
+    )
+    proctoring_result: Mapped["ProctoringResultDB"] = relationship(
         back_populates="proctoring"
     )
 

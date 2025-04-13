@@ -174,5 +174,3 @@ class ProctoringService:
     async def check_image(self, *, image: UploadFile):
         if image.content_type.split("/")[0] != "image":
             raise ...
-
-
