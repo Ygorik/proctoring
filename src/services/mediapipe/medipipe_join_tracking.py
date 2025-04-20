@@ -247,7 +247,7 @@ def mediapipe_all(img, w, h, draw_all = False):
         img.flags.writeable = False
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        results  = face_mesh.process(img)
+        results = face_mesh.process(img)
 
         img.flags.writeable = True
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)

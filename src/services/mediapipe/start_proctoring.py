@@ -9,7 +9,7 @@ from people_counter import people_count
 from mouth_tracking import mouth_open
 from medipipe_join_tracking import mediapipe_all
 
-def main(img):
+def proctoring(img):
     #cap = cv2.VideoCapture("D:/finalwork mediapipe/videos/video_fr11.mp4")
     #cap = cv2.VideoCapture(0)
     p_time = 0
