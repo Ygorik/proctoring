@@ -131,6 +131,7 @@ async def delete_proctoring(
 async def check_image(
     image: UploadFile,
     proctoring_service: ProctoringService = Depends(proctoring_service_dependency),
-) -> str:
-    return image.content_type
-    await proctoring_service.check_image(image=image)
+) -> dict:
+    return await proctoring_service.check_image(image=image)
+    #return image.content_type
+    #await proctoring_service.check_image(image=image)

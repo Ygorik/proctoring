@@ -1,3 +1,5 @@
+import numpy as np
+
 from fastapi import UploadFile
 
 from src.services.authorization.exceptions import UserNotFoundError
@@ -25,15 +27,17 @@ from src.utils.role_checker import (
     check_update_rights,
     check_create_rights,
 )
+from PIL import Image
+from io import BytesIO
 
 
 class ProctoringService:
     def __init__(
-        self,
-        *,
-        proctoring_db_service: ProctoringDBService,
-        user_db_service: UserDBService,
-        subject_db_service: SubjectDBService,
+            self,
+            *,
+            proctoring_db_service: ProctoringDBService,
+            user_db_service: UserDBService,
+            subject_db_service: SubjectDBService,
     ) -> None:
         self.proctoring_db_service = proctoring_db_service
         self.user_db_service = user_db_service
@@ -41,7 +45,7 @@ class ProctoringService:
 
     @check_create_rights
     async def create_proctoring_type(
-        self, *, proctoring_type_data: CreateProctoringTypeSchema
+            self, *, proctoring_type_data: CreateProctoringTypeSchema
     ):
         await self.proctoring_db_service.insert_proctoring_type(
             proctoring_type_data=proctoring_type_data
@@ -53,7 +57,7 @@ class ProctoringService:
 
     @check_read_rights
     async def get_proctoring_type_by_id(
-        self, *, proctoring_type_id: int
+            self, *, proctoring_type_id: int
     ) -> ProctoringTypeItemSchema:
         return await self.get_proctoring_type_by_id_if_exist(
             proctoring_type_id=proctoring_type_id
@@ -61,10 +65,10 @@ class ProctoringService:
 
     @check_update_rights
     async def update_proctoring_type(
-        self,
-        *,
-        proctoring_type_id: int,
-        proctoring_type_data: UpdateProctoringTypeSchema,
+            self,
+            *,
+            proctoring_type_id: int,
+            proctoring_type_data: UpdateProctoringTypeSchema,
     ) -> None:
         await self.get_proctoring_type_by_id_if_exist(
             proctoring_type_id=proctoring_type_id
@@ -87,7 +91,7 @@ class ProctoringService:
 
     @check_create_rights
     async def create_proctoring(
-        self, *, proctoring_data: CreateProctoringSchema
+            self, *, proctoring_data: CreateProctoringSchema
     ) -> None:
         await self.get_proctoring_type_by_id_if_exist(
             proctoring_type_id=proctoring_data.type_id
@@ -101,7 +105,7 @@ class ProctoringService:
 
     @check_read_rights
     async def get_list_of_proctoring(
-        self, *, filters: ProctoringFilters | None
+            self, *, filters: ProctoringFilters | None
     ) -> list[ProctoringItemSchema]:
         return [
             ProctoringItemSchema(
@@ -120,7 +124,7 @@ class ProctoringService:
 
     @check_update_rights
     async def update_proctoring(
-        self, *, proctoring_id: int, proctoring_data: PatchProctoringSchema
+            self, *, proctoring_id: int, proctoring_data: PatchProctoringSchema
     ):
         await self.get_proctoring_by_id_if_exist(proctoring_id=proctoring_id)
         await self.get_subject_by_id_if_exist(subject_id=proctoring_data.subject_id)
@@ -139,19 +143,19 @@ class ProctoringService:
         )
 
     async def get_proctoring_type_by_id_if_exist(
-        self, *, proctoring_type_id: int
+            self, *, proctoring_type_id: int
     ) -> ProctoringTypeItemSchema:
         if proctoring_type := await self.proctoring_db_service.get_proctoring_type_by_id(
-            proctoring_type_id=proctoring_type_id
+                proctoring_type_id=proctoring_type_id
         ):
             return ProctoringTypeItemSchema.model_validate(proctoring_type)
         raise ProctoringNotFoundError
 
     async def get_proctoring_by_id_if_exist(
-        self, *, proctoring_id: int
+            self, *, proctoring_id: int
     ) -> ProctoringItemSchema:
         if proctoring := await self.proctoring_db_service.get_proctoring_by_id(
-            proctoring_id=proctoring_id
+                proctoring_id=proctoring_id
         ):
             return ProctoringItemSchema(
                 proctoring_name=proctoring.proctoring_type.name,
@@ -167,7 +171,7 @@ class ProctoringService:
 
     async def get_subject_by_id_if_exist(self, *, subject_id) -> SubjectSchema:
         if subject := await self.subject_db_service.get_subject_by_id(
-            subject_id=subject_id
+                subject_id=subject_id
         ):
             return subject
         raise SubjectNotFoundError
@@ -176,4 +180,7 @@ class ProctoringService:
         if image.content_type.split("/")[0] != "image":
             raise ...
         else:
-            proctoring(image)
+            contents = await image.read()
+            np_array = np.frombuffer(contents, np.uint8)
+
+            return proctoring(np_array)
