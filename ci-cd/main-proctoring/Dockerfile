@@ -3,6 +3,7 @@ FROM python:3.11
 # Установка CMake и build-essential
 RUN apt-get update && \
     apt-get install -y cmake build-essential && \
+    apt-get install -y libgl1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 

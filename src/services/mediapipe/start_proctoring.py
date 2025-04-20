@@ -1,13 +1,17 @@
 import cv2
-import time
-from utils import fps_scale, colorBackgroundText, FONT
-from face_id import face_rec
-from face_landmark import landmarks_face
-from eyes_tracking import eyes_move
-from head_pose_tracking import head_pose
-from people_counter import people_count
-from mouth_tracking import mouth_open
-from medipipe_join_tracking import mediapipe_all
+
+from src.services.mediapipe.medipipe_join_tracking import mediapipe_all
+
+
+# import time
+# from utils import fps_scale, colorBackgroundText, FONT
+# from face_id import face_rec
+# from face_landmark import landmarks_face
+# from eyes_tracking import eyes_move
+# from head_pose_tracking import head_pose
+# from people_counter import people_count
+# from mouth_tracking import mouth_open
+
 
 def proctoring(img):
     #cap = cv2.VideoCapture("D:/finalwork mediapipe/videos/video_fr11.mp4")
