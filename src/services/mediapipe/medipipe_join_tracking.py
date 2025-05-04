@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
 import mediapipe as mp
-# from utils import eyes_scale, lips_scale, head_scale, counter_scale
 import time
-from src.services.mediapipe.utils import eyes_scale, lips_scale, head_scale, counter_scale
+
+from src.services.mediapipe.schemas import ProctoringResultSchema, ProctoringTypeSchema
 
 # Ключевые точки
 LEFT_EYE = [362, 382, 381, 380, 374, 373, 390, 249, 263, 466, 388, 387, 386, 385, 384, 398]
@@ -13,13 +13,11 @@ LIPS = [61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 308, 324, 318, 402, 3
 
 
 # Функция определяющая ключевые точки на лице
-def landmarks_detection(img, results, draw=False):
+def landmarks_detection(img, results):
     img_height, img_width = img.shape[:2]
     mesh_coord = [(int(point.x * img_width), int(point.y * img_height)) for point in
                   results.multi_face_landmarks[0].landmark]
     landmarks = results.multi_face_landmarks
-    if draw:
-        [cv2.circle(img, p, 2, (0, 255, 0), -1) for p in mesh_coord]
 
     return mesh_coord, landmarks
 
@@ -133,14 +131,11 @@ def lips_ratio(landmarks):
     head_lips = lips_distance / head_distance * 100
 
     if head_lips >= 2:
-        # print(f'Открытие рта {time.ctime(time.time())}')
-        color = [(0, 0, 0), (0, 0, 255)]
         mouth_open = True
     else:
-        color = [(0, 0, 0), (0, 100, 255)]
         mouth_open = False
 
-    return head_lips, color, mouth_open
+    return head_lips, mouth_open
 
 
 # Функция для расчета степени поворота головы
@@ -207,24 +202,16 @@ def head_pose(face_2d, face_3d, w, h):
 # Функция для количества человек
 def people_counter(p_count):
     if p_count == 1:
-        count_txt = 'ONLY ONE'
-        color = [(0, 100, 255), (0, 0, 0)]
         more_then_one = False
         no_one = False
     elif p_count > 1:
-        count_txt = 'MORE THEN ONE'
-        color = [(0, 0, 255), (0, 0, 0)]
-        # print(f'Более одного человека в кадре {time.ctime(time.time())}')
         more_then_one = True
         no_one = False
     elif p_count < 1:
-        count_txt = 'NO ONE'
-        color = [(0, 0, 255), (0, 0, 0)]
-        # print(f'Нет человека в кадре {time.ctime(time.time())}')
         more_then_one = False
         no_one = True
 
-    return count_txt, color, more_then_one, no_one
+    return more_then_one, no_one
 
 
 # Функция для направления взгляда
@@ -241,7 +228,7 @@ def eyes_side(eye_pos_right, eye_pos_left):
     return looking_away
 
 
-def mediapipe_all(img, w, h, draw_all=False):
+def mediapipe_all(img, w, h, proctoring_type: ProctoringTypeSchema) -> ProctoringResultSchema:
     mp_face_mesh = mp.solutions.face_mesh
 
     with mp_face_mesh.FaceMesh(max_num_faces=2, min_detection_confidence=0.5, min_tracking_confidence=0.5) as face_mesh:
@@ -255,36 +242,33 @@ def mediapipe_all(img, w, h, draw_all=False):
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
         if results.multi_face_landmarks:
-            mesh_coords, landmarks = landmarks_detection(img, results, draw_all)
+            mesh_coords, landmarks = landmarks_detection(img, results)
 
             p_count = len(landmarks)  # Количество человек в кадре
 
             landmarks = results.multi_face_landmarks[0].landmark
 
-            # Глаза
-            # cv2.polylines(img, [np.array([mesh_coords[p] for p in LEFT_EYE], dtype=np.int32)], True, (0,255,0), 1, cv2.LINE_AA)
-            # cv2.polylines(img, [np.array([mesh_coords[p] for p in RIGHT_EYE], dtype=np.int32)], True, (0,255,0), 1, cv2.LINE_AA)
-
             right_coords = [mesh_coords[p] for p in RIGHT_EYE]
             left_coords = [mesh_coords[p] for p in LEFT_EYE]
             crop_right, crop_left = eyes_cutout(img, right_coords, left_coords)
 
-            scale_eyes = eyes_scale(w, h)
-
             eye_pos_right, color_right = eye_position(crop_right)
             eye_pos_left, color_left = eye_position(crop_left)
 
-            if eye_pos_right and eye_pos_left:
-                looking_away = eyes_side(eye_pos_right, eye_pos_left)
+            if proctoring_type.looking_away:
+                if eye_pos_right and eye_pos_left:
+                    looking_away = eyes_side(eye_pos_right, eye_pos_left)
+                else:
+                    looking_away = True
+
             else:
-                looking_away = True
+                looking_away = None
 
-            # Губы
-            pos_lips, color_lips, mouth_open = lips_ratio(landmarks)
-
-            # [cv2.circle(img, mesh_coords[p], 1, (0, 255, 0), -1, cv2.LINE_AA) for p in LIPS]
-
-            scale_lips = lips_scale(w, h)
+            if proctoring_type.mouth_opening:
+                # Губы
+                pos_lips, mouth_open = lips_ratio(landmarks)
+            else:
+                mouth_open = None
 
             # Голова
             face_3d = []
@@ -293,57 +277,33 @@ def mediapipe_all(img, w, h, draw_all=False):
             for face_lms in results.multi_face_landmarks:
                 for idx, lm in enumerate(face_lms.landmark):
                     if idx == 33 or idx == 263 or idx == 1 or idx == 61 or idx == 291 or idx == 199:
-                        if idx == 1:
-                            # Координаты носа
-                            nose_2d = (lm.x * w, lm.y * h)
-
                         x, y = int(lm.x * w), int(lm.y * h)
-
                         # Получение 2D координат
                         face_2d.append([x, y])
-
                         # Получение 3D координат
                         face_3d.append([x, y, lm.z])
 
-                pos_head, color_head, x, y, head_turning = head_pose(face_2d, face_3d, w, h)
-
-                p1 = (int(nose_2d[0]), int(nose_2d[1]))
-                p2 = (int(nose_2d[0] + y * 10), int(nose_2d[1] - x * 10))
-
-                # cv2.line(img, p1, p2, (255,0,0), 3)
-
-                scale_head = head_scale(w, h)
-
-                # Вывод на изображение:
-                # Глаза
-                # colorBackgroundText(img, f'R: {eye_pos_right}', FONT, scale_eyes[0], (scale_eyes[1], scale_eyes[2]), scale_eyes[4], color_right[0], color_right[1], scale_eyes[5], scale_eyes[5])
-                # colorBackgroundText(img, f'L: {eye_pos_left}', FONT, scale_eyes[0], (scale_eyes[1], scale_eyes[3]), scale_eyes[4], color_left[0], color_left[1], scale_eyes[5], scale_eyes[5])
-
-                # Губы
-                # colorBackgroundText(img, f"LIPS: {pos_lips:.3f}", FONT, scale_lips[0], (scale_lips[1], scale_lips[2]), scale_lips[3], color_lips[0], color_lips[1], scale_lips[4], scale_lips[4])
-
-                # Голова
-                # colorBackgroundText(img, f'Head: {pos_head}', FONT, scale_head[0], (scale_head[1], scale_head[2]), scale_head[3], color_head[0], color_head[1], scale_head[4], scale_head[4])
+                if proctoring_type.hints_outside:
+                    pos_head, color_head, x, y, head_turning = head_pose(face_2d, face_3d, w, h)
+                else:
+                    head_turning = None
         else:
             p_count = 0
-            looking_away = True
-            mouth_open = False
-            more_then_one = False
-            no_one = True
-            head_turning = True
+            looking_away = True if proctoring_type.looking_away else None
+            mouth_open = False if proctoring_type.mouth_opening else None
+            head_turning = True if proctoring_type.hints_outside else None
 
         # Подсчет количества человек
-        count_txt, color_count, more_then_one, no_one = people_counter(p_count)
+        if proctoring_type.absence_person or proctoring_type.extra_person:
+            more_then_one, no_one = people_counter(p_count)
+        else:
+            more_then_one, no_one = None, None
 
-        scale_count = counter_scale(w, h)
-
-        # Каунтер
-        # colorBackgroundText(img, f"{count_txt}", FONT, scale_count[0], (scale_count[1], scale_count[2]), scale_count[3], color_count[0], color_count[1], scale_count[4], scale_count[4])
-
-        keys = ['Отвод взгляда:', 'Открытие рта:', 'Больше одного человека:', 'Нет человека:',
-                'Голова отведена от центра:']
-        values = [looking_away, mouth_open, more_then_one, no_one, head_turning]
-
-        result_dict = {k: v for k, v in zip(keys, values)}
-
-    return img, result_dict
+    return ProctoringResultSchema(
+        detected_absence_person=no_one,
+        detected_extra_person=more_then_one,
+        detected_person_substitution=False,  # Проверка не реализована
+        detected_looking_away=looking_away,
+        detected_mouth_opening=mouth_open,
+        detected_hints_outside=head_turning,
+    )

@@ -1,11 +1,10 @@
 import numpy as np
-
 from fastapi import UploadFile
 
 from src.services.authorization.exceptions import UserNotFoundError
-from src.services.mediapipe.start_proctoring import proctoring
+from src.services.mediapipe.start_proctoring import handle_proctoring
 from src.services.proctoring.db_service import ProctoringDBService
-from src.services.proctoring.exceptions import ProctoringNotFoundError
+from src.services.proctoring.exceptions import ProctoringNotFoundError, NotImageError
 from src.services.proctoring.schemas import (
     ProctoringItemSchema,
     CreateProctoringSchema,
@@ -13,8 +12,9 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringTypeItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters,
+    ProctoringFilters, ProctoringDataSchema,
 )
+from src.services.proctoring_result.db_service import ProctoringResultDBService
 from src.services.subject.db_service import SubjectDBService
 from src.services.subject.exceptions import SubjectNotFoundError
 from src.services.subject.schemas import SubjectSchema
@@ -27,21 +27,21 @@ from src.utils.role_checker import (
     check_update_rights,
     check_create_rights,
 )
-from PIL import Image
-from io import BytesIO
 
 
 class ProctoringService:
     def __init__(
-            self,
-            *,
-            proctoring_db_service: ProctoringDBService,
-            user_db_service: UserDBService,
-            subject_db_service: SubjectDBService,
+        self,
+        *,
+        proctoring_db_service: ProctoringDBService,
+        user_db_service: UserDBService,
+        subject_db_service: SubjectDBService,
+        proctoring_result_db_service: ProctoringResultDBService,
     ) -> None:
         self.proctoring_db_service = proctoring_db_service
         self.user_db_service = user_db_service
         self.subject_db_service = subject_db_service
+        self.proctoring_result_db_service = proctoring_result_db_service
 
     @check_create_rights
     async def create_proctoring_type(
@@ -99,7 +99,7 @@ class ProctoringService:
         await self.get_subject_by_id_if_exist(subject_id=proctoring_data.subject_id)
         await self.get_user_by_id_if_exist(user_id=proctoring_data.user_id)
 
-        await self.proctoring_db_service.insert_proctoring(
+        await self.proctoring_db_service.create_proctoring(
             proctoring_data=proctoring_data
         )
 
@@ -161,6 +161,7 @@ class ProctoringService:
                 proctoring_name=proctoring.proctoring_type.name,
                 user_name=proctoring.user.full_name,
                 subject_name=proctoring.subject.name,
+                result_id=proctoring.result_id
             )
         raise ProctoringNotFoundError
 
@@ -176,11 +177,20 @@ class ProctoringService:
             return subject
         raise SubjectNotFoundError
 
-    async def check_image(self, *, image: UploadFile):
+    async def check_image(self, *, proctoring_id: int, image: UploadFile) -> None:
         if image.content_type.split("/")[0] != "image":
-            raise ...
-        else:
-            contents = await image.read()
-            np_array = np.frombuffer(contents, np.uint8)
+            raise NotImageError
 
-            return proctoring(np_array)
+        if not (proctoring := await self.proctoring_db_service.get_proctoring_by_id(
+                proctoring_id=proctoring_id
+        )):
+            raise ProctoringNotFoundError
+
+        image_array = np.frombuffer(await image.read(), np.uint8)
+
+        result = handle_proctoring(img=image_array, proctoring_type=proctoring.proctoring_type)
+        update_dict = {k: v for k, v in result.model_dump().items() if v is not False}
+
+        await self.proctoring_result_db_service.set_new_proctoring_result(
+            proctoring_result_id=proctoring.result_id, proctoring_result_data=update_dict
+        )

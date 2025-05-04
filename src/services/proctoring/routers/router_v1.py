@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path, UploadFile
+from fastapi import APIRouter, Depends, Path, UploadFile, Query
 from starlette import status
 
 from src.services.authorization.schemas import User
@@ -10,7 +10,7 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters,
+    ProctoringFilters, ProctoringDataSchema,
 )
 from src.services.proctoring.service import ProctoringService
 from src.services.token.service import decode_user_token
@@ -130,8 +130,7 @@ async def delete_proctoring(
 @router.post("/check", status_code=status.HTTP_200_OK)
 async def check_image(
     image: UploadFile,
+    proctoring_id: int = Query(alias="proctoringId"),
     proctoring_service: ProctoringService = Depends(proctoring_service_dependency),
-) -> dict:
-    return await proctoring_service.check_image(image=image)
-    #return image.content_type
-    #await proctoring_service.check_image(image=image)
+) -> None:
+    return await proctoring_service.check_image(proctoring_id=proctoring_id, image=image)
