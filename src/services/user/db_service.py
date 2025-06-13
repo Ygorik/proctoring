@@ -25,9 +25,13 @@ class UserDBService(BaseDBService):
                 insert(UserDB).values(**register_data.model_dump(exclude={"password"}))
             )
 
-    async def get_list_of_users(self, *, filters: UserFilters) -> list[UserItemForList]:
-        stmt = select(UserDB).options(
-            load_only(UserDB.id, UserDB.full_name, UserDB.login)
+    async def get_list_of_users(self, *, filters: UserFilters) -> list[UserDB]:
+        stmt = (
+            select(UserDB)
+            .options(
+                selectinload(UserDB.role).load_only(RoleDB.name),
+                load_only(UserDB.id, UserDB.full_name, UserDB.login),
+            )
         )
 
         stmt = self.filter_user_list(stmt=stmt, filters=filters)

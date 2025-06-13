@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
 from src.services.user.routers.router_v1 import router as registration_router
 from src.services.authorization.routers.router_v1 import router as authorization_router
 from src.services.role.routers.router_v1 import router as role_router
@@ -11,6 +13,20 @@ from src.services.proctoring_result.routers.router_v1 import (
 
 
 app = FastAPI()
+
+# Указываем разрешенные источники (frontend)
+origins = [
+    "http://localhost:3000",  # React dev сервер
+    "http://127.0.0.1:3000",  # на всякий случай
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,             # откуда разрешены запросы
+    allow_credentials=True,
+    allow_methods=["*"],               # какие методы разрешены (GET, POST и т.д.)
+    allow_headers=["*"],               # какие заголовки разрешены (например, Authorization)
+)
 
 app.include_router(token_router, prefix="/api/v1/token", tags=["Token"])
 
@@ -29,3 +45,7 @@ app.include_router(
     prefix="/api/v1/proctoring-result",
     tags=["Proctoring | Result"],
 )
+
+@app.get("/ping")
+async def ping():
+    return {"message": "pong"}

@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, timezone
 
 import jwt
+from fastapi import Header
 from jwt import InvalidTokenError
 
 from src.services.authorization.schemas import User, Token
@@ -8,7 +9,7 @@ from src.services.token.exceptions import WrongTokenError
 from src.config import settings
 
 
-async def decode_user_token(*, token: str) -> User:
+async def decode_user_token(*, token: str = Header()) -> User:
     try:
         user_dict = jwt.decode(
             token,

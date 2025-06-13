@@ -2,7 +2,7 @@ import re
 from uuid import UUID
 
 from fastapi import Query
-from pydantic import field_validator
+from pydantic import field_validator, Field
 
 from src.base_schemas import BaseResponseSchemas
 from src.services.role.schemas import RoleItemSchema
@@ -24,9 +24,10 @@ class RegisterData(BaseResponseSchemas):
 
 
 class UserItemForList(BaseResponseSchemas):
-    id: UUID
+    id: int
     full_name: str
     login: str
+    role_name: str
 
 
 class UserItem(UserItemForList):
