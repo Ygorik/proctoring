@@ -10,7 +10,7 @@ from src.services.authorization.service import AuthorizeService
 router = APIRouter()
 
 
-@router.post("", status_code=status.HTTP_200_OK)
+@router.post("/", status_code=status.HTTP_200_OK)
 async def authorize_user(
     authorization_data: AuthorizationSchema,
     authorize_service: AuthorizeService = Depends(authorize_service_dependency),

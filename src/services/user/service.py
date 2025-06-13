@@ -54,7 +54,14 @@ class UserService:
 
     @check_read_rights
     async def get_list_of_users(self, *, filters: UserFilters) -> list[UserItemForList]:
-        return await self.user_db_service.get_list_of_users(filters=filters)
+        return [
+            UserItemForList(
+                id=user_db.id,
+                full_name=user_db.full_name,
+                login=user_db.login,
+                role_name=user_db.role.name,
+            ) for user_db in await self.user_db_service.get_list_of_users(filters=filters)
+        ]
 
     @check_read_rights
     async def get_user_by_id(self, *, user_id: int) -> UserItem:

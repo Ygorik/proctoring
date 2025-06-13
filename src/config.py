@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     TOKEN_SECRET_KEY: str = "some_secret"
     GENERATE_TOKEN_ALGORITHM: str = "HS256"
-    TOKEN_EXPIRE_MINUTES: int = 30
+    TOKEN_EXPIRE_MINUTES: int = 120
 
 
 settings = Settings()
