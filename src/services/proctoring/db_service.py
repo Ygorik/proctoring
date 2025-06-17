@@ -1,8 +1,9 @@
 from sqlalchemy import insert, select, update, delete, Select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.db.base_db_service import BaseDBService
-from src.db.models import ProctoringDB, ProctoringTypeDB
+from src.db.models import ProctoringDB, ProctoringTypeDB, ProctoringResultDB
 from src.services.proctoring.schemas import (
     CreateProctoringSchema,
     ProctoringItemSchema,
@@ -10,7 +11,7 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringTypeItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters,
+    ProctoringFilters, InsertProctoringSchema,
 )
 
 
@@ -61,14 +62,29 @@ class ProctoringDBService(BaseDBService):
             )
             await sess.commit()
 
-    async def insert_proctoring(
+    async def create_proctoring(
         self, *, proctoring_data: CreateProctoringSchema
     ) -> None:
         async with self.get_async_session() as sess:
-            await sess.execute(
-                insert(ProctoringDB).values(proctoring_data.model_dump())
+            proctoring_result_id = await self.insert_proctoring_result(sess=sess)
+            insert_proctoring_data = InsertProctoringSchema(
+                **proctoring_data.model_dump(),
+                result_id=proctoring_result_id,
             )
+            await self.insert_proctoring(sess=sess, proctoring_data=insert_proctoring_data)
             await sess.commit()
+
+    @staticmethod
+    async def insert_proctoring_result(*, sess: AsyncSession) -> int:
+        return await sess.scalar(
+            insert(ProctoringResultDB).returning(ProctoringResultDB.id)
+        )
+
+    @staticmethod
+    async def insert_proctoring(*, sess: AsyncSession, proctoring_data: InsertProctoringSchema) -> None:
+        await sess.execute(
+            insert(ProctoringDB).values(proctoring_data.model_dump())
+        )
 
     async def get_list_of_proctoring(
         self, *, filters: ProctoringFilters | None
@@ -95,7 +111,7 @@ class ProctoringDBService(BaseDBService):
 
         return stmt
 
-    async def get_proctoring_by_id(self, *, proctoring_id: int) -> ProctoringItemSchema:
+    async def get_proctoring_by_id(self, *, proctoring_id: int) -> ProctoringDB:
         async with self.get_async_session() as sess:
             return await sess.scalar(
                 select(ProctoringDB)
@@ -103,6 +119,7 @@ class ProctoringDBService(BaseDBService):
                     selectinload(ProctoringDB.proctoring_type),
                     selectinload(ProctoringDB.user),
                     selectinload(ProctoringDB.subject),
+                    selectinload(ProctoringDB.proctoring_result)
                 )
                 .where(ProctoringDB.id == proctoring_id)
             )

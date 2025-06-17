@@ -92,6 +92,20 @@ class ProctoringResultDBService(BaseDBService):
             )
             await sess.commit()
 
+    async def set_new_proctoring_result(
+        self,
+        *,
+        proctoring_result_id: int,
+        proctoring_result_data: dict
+    ) -> None:
+        async with self.get_async_session() as sess:
+            await sess.execute(
+                update(ProctoringResultDB)
+                .values(**proctoring_result_data)
+                .where(ProctoringResultDB.id == proctoring_result_id)
+            )
+            await sess.commit()
+
     async def delete_proctoring_result(self, *, proctoring_result_id: int) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(

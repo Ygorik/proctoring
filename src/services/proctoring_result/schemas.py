@@ -22,9 +22,9 @@ class ProctoringResultItemSchema(BaseResponseSchemas):
 
 
 class PatchProctoringResultSchema(BaseResponseSchemas):
-    detected_absence_person: bool
-    detected_extra_person: bool
-    detected_person_substitution: bool
-    detected_looking_away: bool
-    detected_mouth_opening: bool
-    detected_hints_outside: bool
+    detected_absence_person: bool | None
+    detected_extra_person: bool | None
+    detected_person_substitution: bool | None
+    detected_looking_away: bool | None
+    detected_mouth_opening: bool | None
+    detected_hints_outside: bool | None

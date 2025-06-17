@@ -12,3 +12,14 @@ class ProctoringNotFoundError(BaseBackendError):
         super().__init__(
             status_code=status.HTTP_404_NOT_FOUND, message=message, data=data
         )
+
+
+class NotImageError(BaseBackendError):
+    def __init__(
+        self,
+        message: str | None = "Файл не является изображением",
+        data: list | None = None,
+    ) -> None:
+        super().__init__(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, message=message, data=data
+        )

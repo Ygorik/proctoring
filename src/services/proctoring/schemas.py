@@ -1,4 +1,4 @@
-from fastapi import Query
+from fastapi import Query, UploadFile
 
 from src.base_schemas import BaseResponseSchemas
 
@@ -7,6 +7,10 @@ class CreateProctoringSchema(BaseResponseSchemas):
     user_id: int
     subject_id: int
     type_id: int
+
+
+class InsertProctoringSchema(CreateProctoringSchema):
+    result_id: int
 
 
 class CreateProctoringTypeSchema(BaseResponseSchemas):
@@ -43,6 +47,7 @@ class ProctoringItemSchema(BaseResponseSchemas):
     proctoring_name: str
     user_name: str
     subject_name: str
+    result_id: int
 
 
 class PatchProctoringSchema(BaseResponseSchemas):
@@ -61,3 +66,7 @@ class ProctoringFilters:
         self.user_id = user_id
         self.subject_id = subject_id
         self.type_id = type_id
+
+
+class ProctoringDataSchema(BaseResponseSchemas):
+    proctoring_id: int | str
