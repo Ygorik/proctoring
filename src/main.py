@@ -45,7 +45,3 @@ app.include_router(
     prefix="/api/v1/proctoring-result",
     tags=["Proctoring | Result"],
 )
-
-@app.get("/ping")
-async def ping():
-    return {"message": "pong"}

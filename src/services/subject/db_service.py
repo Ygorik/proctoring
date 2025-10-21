@@ -30,7 +30,7 @@ class SubjectDBService(BaseDBService):
     ) -> list[SubjectListItemSchema]:
         stmt = select(SubjectDB)
 
-        stmt = self.filter_user_list(stmt=stmt, filters=filters)
+        stmt = await self.filter_user_list(stmt=stmt, filters=filters)
 
         async with self.get_async_session() as sess:
             return await sess.scalars(stmt)
