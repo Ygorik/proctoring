@@ -112,6 +112,7 @@ class ProctoringService:
                 proctoring_name=orm.proctoring_type.name,
                 user_name=orm.user.full_name,
                 subject_name=orm.subject.name,
+                result_id=orm.result_id
             )
             for orm in await self.proctoring_db_service.get_list_of_proctoring(
                 filters=filters
