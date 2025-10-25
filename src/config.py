@@ -23,5 +23,11 @@ class Settings(BaseSettings):
     GENERATE_TOKEN_ALGORITHM: str = "HS256"
     TOKEN_EXPIRE_MINUTES: int = 120
 
+    MINIO_ENDPOINT: str = "minio:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_SECURE: bool = False
+    MINIO_BUCKET_NAME: str = "proctoring-snapshots"
+
 
 settings = Settings()

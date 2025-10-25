@@ -20,6 +20,9 @@ class ProctoringDB(BaseDB, BaseDBMixin):
     proctoring_result: Mapped["ProctoringResultDB"] = relationship(
         back_populates="proctoring"
     )
+    snapshots: Mapped[list["ProctoringSnapshotDB"]] = relationship(
+        back_populates="proctoring", cascade="all, delete-orphan"
+    )
 
 
 class ProctoringTypeDB(BaseDB, BaseDBMixin):
