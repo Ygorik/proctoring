@@ -53,7 +53,10 @@ class ProctoringService:
 
     @check_read_rights
     async def get_list_of_proctoring_types(self) -> list[ProctoringTypeItemSchema]:
-        return await self.proctoring_db_service.get_list_of_proctoring_types()
+        proctoring_types = await self.proctoring_db_service.get_list_of_proctoring_types()
+        return [
+            ProctoringTypeItemSchema.model_validate(pt) for pt in proctoring_types
+        ]
 
     @check_read_rights
     async def get_proctoring_type_by_id(
@@ -109,6 +112,7 @@ class ProctoringService:
     ) -> list[ProctoringItemSchema]:
         return [
             ProctoringItemSchema(
+                id=orm.id,
                 proctoring_name=orm.proctoring_type.name,
                 user_name=orm.user.full_name,
                 subject_name=orm.subject.name,
@@ -159,6 +163,7 @@ class ProctoringService:
                 proctoring_id=proctoring_id
         ):
             return ProctoringItemSchema(
+                id=proctoring.id,
                 proctoring_name=proctoring.proctoring_type.name,
                 user_name=proctoring.user.full_name,
                 subject_name=proctoring.subject.name,

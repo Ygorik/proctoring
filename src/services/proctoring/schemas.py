@@ -24,6 +24,7 @@ class CreateProctoringTypeSchema(BaseResponseSchemas):
 
 
 class ProctoringTypeItemSchema(BaseResponseSchemas):
+    id: int
     name: str
     absence_person: bool
     extra_person: bool
@@ -44,6 +45,7 @@ class UpdateProctoringTypeSchema(BaseResponseSchemas):
 
 
 class ProctoringItemSchema(BaseResponseSchemas):
+    id: int
     proctoring_name: str
     user_name: str
     subject_name: str

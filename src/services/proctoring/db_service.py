@@ -11,7 +11,8 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringTypeItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters, InsertProctoringSchema,
+    ProctoringFilters, 
+    InsertProctoringSchema,
 )
 
 
@@ -25,13 +26,14 @@ class ProctoringDBService(BaseDBService):
             )
             await sess.commit()
 
-    async def get_list_of_proctoring_types(self) -> list[ProctoringTypeItemSchema]:
+    async def get_list_of_proctoring_types(self) -> list[ProctoringTypeDB]:
         async with self.get_async_session() as sess:
-            return await sess.scalars(select(ProctoringTypeDB))
+            result = await sess.scalars(select(ProctoringTypeDB))
+            return result.all()
 
     async def get_proctoring_type_by_id(
         self, *, proctoring_type_id: int
-    ) -> ProctoringTypeItemSchema:
+    ) -> ProctoringTypeDB | None:
         async with self.get_async_session() as sess:
             return await sess.scalar(
                 select(ProctoringTypeDB).where(
