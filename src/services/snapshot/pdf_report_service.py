@@ -176,7 +176,7 @@ class PDFReportService:
         elements.append(Paragraph("Session Information", self.styles['CustomHeading']))
         
         info_data = [
-            ['Student:', data['user'].username if data['user'] else 'N/A'],
+            ['Student:', data['user'].login if data['user'] else 'N/A'],
             ['Subject:', data['subject'].name if data['subject'] else 'N/A'],
             ['Session ID:', str(data['proctoring'].id)],
             ['Date:', data['proctoring'].created_at.strftime("%Y-%m-%d %H:%M:%S")],

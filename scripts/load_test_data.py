@@ -35,6 +35,69 @@ async def load_test_data():
         try:
             print("🔄 Начинаем загрузку тестовых данных...")
             
+            # Сначала удаляем существующие тестовые данные если они есть
+            print("🧹 Удаление существующих тестовых данных (если есть)...")
+            
+            # Удаляем в обратном порядке из-за foreign keys
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM proctoring 
+                    WHERE user_id IN (
+                        SELECT id FROM "user" 
+                        WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova')
+                    );
+                    """
+                )
+            )
+            
+            await session.execute(
+                text("DELETE FROM proctoring_result WHERE id BETWEEN 1 AND 5;")
+            )
+            
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM proctoring_type 
+                    WHERE name IN ('Строгий контроль', 'Стандартный контроль', 'Базовый контроль', 'Минимальный контроль');
+                    """
+                )
+            )
+            
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM subject_user 
+                    WHERE subject_id IN (
+                        SELECT id FROM subject 
+                        WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык')
+                    );
+                    """
+                )
+            )
+            
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM subject 
+                    WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык');
+                    """
+                )
+            )
+            
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM "user" 
+                    WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova');
+                    """
+                )
+            )
+            
+            await session.execute(
+                text("DELETE FROM role WHERE name='user';")
+            )
+            
             # Инициализируем криптографер для паролей
             crypto = Cryptographer(settings.CRYPTO_KEY)
             test_password = crypto.encrypt("Test123!")
@@ -45,8 +108,7 @@ async def load_test_data():
                 text(
                     """
                     INSERT INTO role (name, rights_create, rights_read, rights_update, rights_delete) 
-                    VALUES ('user', FALSE, TRUE, FALSE, FALSE)
-                    ON CONFLICT (name) DO NOTHING;
+                    VALUES ('user', FALSE, TRUE, FALSE, FALSE);
                     """
                 )
             )
@@ -61,8 +123,7 @@ async def load_test_data():
                     ('petrov', :password, 'Петров Петр Петрович', 2),
                     ('sidorova', :password, 'Сидорова Анна Сергеевна', 2),
                     ('kuznetsov', :password, 'Кузнецов Алексей Владимирович', 2),
-                    ('smirnova', :password, 'Смирнова Елена Дмитриевна', 2)
-                    ON CONFLICT (login) DO NOTHING;
+                    ('smirnova', :password, 'Смирнова Елена Дмитриевна', 2);
                     """
                 ).bindparams(password=test_password)
             )
@@ -77,8 +138,7 @@ async def load_test_data():
                     ('Физика'),
                     ('Программирование'),
                     ('История'),
-                    ('Английский язык')
-                    ON CONFLICT (name) DO NOTHING;
+                    ('Английский язык');
                     """
                 )
             )
@@ -103,8 +163,7 @@ async def load_test_data():
                     
                     SELECT s.id, u.id 
                     FROM subject s, "user" u 
-                    WHERE u.login IN ('smirnova', 'ivanov') AND s.name = 'Программирование'
-                    ON CONFLICT DO NOTHING;
+                    WHERE u.login IN ('smirnova', 'ivanov') AND s.name = 'Программирование';
                     """
                 )
             )
@@ -118,8 +177,7 @@ async def load_test_data():
                     ('Строгий контроль', TRUE, TRUE, TRUE, TRUE, TRUE, TRUE),
                     ('Стандартный контроль', TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
                     ('Базовый контроль', TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
-                    ('Минимальный контроль', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE)
-                    ON CONFLICT (name) DO NOTHING;
+                    ('Минимальный контроль', TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
                     """
                 )
             )
@@ -160,8 +218,7 @@ async def load_test_data():
                       AND s.name = 'Математика' 
                       AND pt.name = 'Строгий контроль'
                       AND pr.id = 1
-                    LIMIT 1
-                    ON CONFLICT DO NOTHING;
+                    LIMIT 1;
                     """
                 )
             )
@@ -184,8 +241,7 @@ async def load_test_data():
                       AND s.name = 'Математика' 
                       AND pt.name = 'Стандартный контроль'
                       AND pr.id = 2
-                    LIMIT 1
-                    ON CONFLICT DO NOTHING;
+                    LIMIT 1;
                     """
                 )
             )
@@ -208,8 +264,7 @@ async def load_test_data():
                       AND s.name = 'Физика' 
                       AND pt.name = 'Стандартный контроль'
                       AND pr.id = 3
-                    LIMIT 1
-                    ON CONFLICT DO NOTHING;
+                    LIMIT 1;
                     """
                 )
             )

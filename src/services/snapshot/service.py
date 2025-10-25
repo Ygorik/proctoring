@@ -173,8 +173,9 @@ class SnapshotService:
         ):
             raise ProctoringNotFoundError
         
-        # Генерируем отчет
-        return await pdf_report_service.generate_report(
-            proctoring_id=proctoring_id,
-            session=self.snapshot_db_service.session
-        )
+        # Создаем сессию и генерируем отчет
+        async with self.snapshot_db_service.get_async_session() as session:
+            return await pdf_report_service.generate_report(
+                proctoring_id=proctoring_id,
+                session=session
+            )
