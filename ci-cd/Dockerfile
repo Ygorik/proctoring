@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements/base.txt ./requirements/base.txt
 COPY requirements/linux_reqs.txt ./requirements/linux_reqs.txt
 
-RUN --mount=type=cache,target=/root/.cache/pip \
+RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements/linux_reqs.txt
 
 COPY src ./src
