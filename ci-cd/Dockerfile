@@ -15,11 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 
 
-COPY requirements/base.txt ./requirements/base.txt
-COPY requirements/linux_reqs.txt ./requirements/linux_reqs.txt
+COPY requirements/ ./requirements/
 
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir -r requirements/linux_reqs.txt
+    pip install -r requirements/linux_reqs.txt
 
 COPY src ./src
 COPY alembic ./alembic
