@@ -9,10 +9,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential cmake \
-    libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
- && rm -rf /var/lib/apt/lists/*
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential cmake \
+      libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
+      fonts-dejavu-core && \
+    rm -rf /var/lib/apt/lists/*
 
 
 COPY requirements/ ./requirements/
