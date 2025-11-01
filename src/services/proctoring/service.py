@@ -12,12 +12,14 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringTypeItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters, ProctoringDataSchema,
+    ProctoringFilters,
+    SampleData,
+    SampleUser,
 )
 from src.services.proctoring_result.db_service import ProctoringResultDBService
 from src.services.subject.db_service import SubjectDBService
 from src.services.subject.exceptions import SubjectNotFoundError
-from src.services.subject.schemas import SubjectSchema
+from src.services.subject.schemas import SubjectSchema, CreateSubjectSchema
 from src.services.user.db_service import UserDBService
 from src.services.user.schemas import UserItem
 
@@ -177,6 +179,38 @@ class ProctoringService:
         ):
             return subject
         raise SubjectNotFoundError
+
+
+    async def upload_sample(self, *, sample_data: SampleData) -> int:
+        user_id = await self._get_user_id(user_data=sample_data.user)
+        subject_id = await self._get_subject_id(subject_data=sample_data.subject)
+
+        type_id = sample_data.type_id or await self.proctoring_db_service.get_default_proctoring_type_id()
+
+        if type_id is None:
+            raise ProctoringNotFoundError(message="Тип прокторинга не найден.")
+
+        proctoring_id = await self.proctoring_db_service.create_proctoring(
+            proctoring_data=CreateProctoringSchema(
+                user_id=user_id,
+                subject_id=subject_id,
+                type_id=type_id,
+            )
+        )
+
+        return proctoring_id
+
+    async def _get_user_id(self, *, user_data: SampleUser) -> int:
+        if user := await self.user_db_service.get_user_by_name(name=user_data.name):
+            return user.id
+
+        return await self.user_db_service.create_student_user(user_data=user_data)
+
+    async def _get_subject_id(self, *, subject_data: CreateSubjectSchema) -> int:
+        if subject := await self.subject_db_service.get_subject_by_name(name=subject_data.name):
+            return subject.id
+
+        return await self.subject_db_service.insert_subject(subject_data=subject_data)
 
     async def check_image(self, *, proctoring_id: int, image: UploadFile) -> None:
         if image.content_type.split("/")[0] != "image":

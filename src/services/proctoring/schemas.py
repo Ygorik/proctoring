@@ -1,6 +1,7 @@
-from fastapi import Query, UploadFile
+from fastapi import Query
 
 from src.base_schemas import BaseResponseSchemas
+from src.services.subject.schemas import CreateSubjectSchema
 
 
 class CreateProctoringSchema(BaseResponseSchemas):
@@ -68,5 +69,20 @@ class ProctoringFilters:
         self.type_id = type_id
 
 
-class ProctoringDataSchema(BaseResponseSchemas):
-    proctoring_id: int | str
+class SampleUser(BaseResponseSchemas):
+    id: str
+    name: str
+
+
+class SampleTest(BaseResponseSchemas):
+    id: str
+    name: str
+
+
+class SampleData(BaseResponseSchemas):
+    user: SampleUser
+    subject: CreateSubjectSchema
+    test: SampleTest
+    type_id: int | None = None
+    attempt: int
+    preflight_id: int

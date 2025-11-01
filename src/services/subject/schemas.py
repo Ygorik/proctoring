@@ -4,6 +4,7 @@ from src.base_schemas import BaseResponseSchemas
 
 
 class CreateSubjectSchema(BaseResponseSchemas):
+    id: int | None = None
     name: str
 
 

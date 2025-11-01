@@ -35,4 +35,6 @@ class ProctoringTypeDB(BaseDB, BaseDBMixin):
     mouth_opening: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
     hints_outside: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
 
+    default: Mapped[bool] = mapped_column(default=False, server_default="FALSE")
+
     proctoring: Mapped["ProctoringDB"] = relationship(back_populates="proctoring_type")

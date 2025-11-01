@@ -1,9 +1,9 @@
 from sqlalchemy import select, insert, update, delete, Select
 from sqlalchemy.orm import load_only, selectinload
 
+from src.services.proctoring.schemas import SampleUser
 from src.services.user.schemas import (
     RegisterData,
-    UserItemForList,
     UserItem,
     PatchUserData,
     UserFilters,
@@ -81,3 +81,13 @@ class UserDBService(BaseDBService):
         async with self.get_async_session() as sess:
             await sess.execute(delete(UserDB).where(UserDB.id == user_id))
             await sess.commit()
+
+    async def create_student_user(self, *, user_data: SampleUser) -> int:
+        async with self.get_async_session() as sess:
+            user_id = await sess.scalar(insert(UserDB).values(**user_data.model_dump(exclude_none=True)))
+            await sess.commit()
+        return user_id
+
+    async def get_user_by_name(self, *, name: str) -> UserDB:
+        async with self.get_async_session() as sess:
+            return await sess.scalar(select(UserDB).where(UserDB.full_name == name))

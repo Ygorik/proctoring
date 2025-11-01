@@ -23,5 +23,8 @@ class Settings(BaseSettings):
     GENERATE_TOKEN_ALGORITHM: str = "HS256"
     TOKEN_EXPIRE_MINUTES: int = 120
 
+    MOODLE_SECRET: str = "MOODLE_SECRET"
+    MOODLE_SECRET_KEY: bytes = b'rkXO1QJ9hAPeQZJ8kzonFU75BjjG8d64zBcEFvg33ew='
+
 
 settings = Settings()
