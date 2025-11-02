@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from src.config import settings
-from src.services.snapshot.minio_service import minio_service
+from src.services.snapshot.s3_service import s3_service
 
 
 def generate_test_image(
@@ -144,24 +144,24 @@ async def load_test_snapshots():
                     print(f"  📷 Создаем снимок #{i+1}: {violation_text}...", end=" ")
                     image_data = generate_test_image(image_text, color=color)
                     
-                    # Генерируем ключ для MinIO
-                    object_key = minio_service.generate_object_key(
+                    # Генерируем ключ для S3
+                    object_key = s3_service.generate_object_key(
                         user_id=user_id,
                         proctoring_id=proctoring_id,
                         timestamp=snapshot_time,
                         violation_type=violation_type
                     )
                     
-                    # Загружаем в MinIO
+                    # Загружаем в S3 асинхронно
                     try:
-                        object_key, file_size = minio_service.upload_snapshot(
+                        object_key, file_size = await s3_service.upload_snapshot(
                             file_data=image_data,
                             object_key=object_key,
                             content_type="image/jpeg"
                         )
-                        print(f"✓ MinIO", end=" ")
+                        print(f"✓ S3", end=" ")
                     except Exception as e:
-                        print(f"✗ Ошибка MinIO: {e}")
+                        print(f"✗ Ошибка S3: {e}")
                         continue
                     
                     # Сохраняем метаданные в БД
@@ -170,28 +170,22 @@ async def load_test_snapshots():
                             text(
                                 """
                                 INSERT INTO proctoring_snapshot 
-                                (proctoring_id, bucket_name, object_key, file_size, content_type, 
-                                 timestamp, uploaded_at, violation_type, violation_severity, 
-                                 description, is_violation, metadata_json)
+                                (proctoring_id, bucket_name, object_key, violation_type, metadata_json)
                                 VALUES 
-                                (:proctoring_id, :bucket_name, :object_key, :file_size, :content_type,
-                                 :timestamp, :uploaded_at, :violation_type, :violation_severity,
-                                 :description, :is_violation, :metadata_json)
+                                (:proctoring_id, :bucket_name, :object_key, :violation_type, :metadata_json)
                                 """
                             ),
                             {
                                 "proctoring_id": proctoring_id,
-                                "bucket_name": minio_service.bucket_name,
+                                "bucket_name": s3_service.bucket_name,
                                 "object_key": object_key,
-                                "file_size": file_size,
-                                "content_type": "image/jpeg",
-                                "timestamp": snapshot_time,
-                                "uploaded_at": datetime.now(),
                                 "violation_type": violation_type,
-                                "violation_severity": "medium" if is_violation else None,
-                                "description": f"Тестовый снимок: {violation_text}",
-                                "is_violation": is_violation,
-                                "metadata_json": None
+                                "metadata_json": {
+                                    "file_size": file_size,
+                                    "content_type": "image/jpeg",
+                                    "test_description": f"Тестовый снимок: {violation_text}",
+                                    "test_timestamp": snapshot_time.isoformat()
+                                }
                             }
                         )
                         print(f"✓ БД")
@@ -206,7 +200,7 @@ async def load_test_snapshots():
             print(f"\n📊 Статистика:")
             print(f"   - Сессий прокторинга: {len(proctoring_sessions)}")
             print(f"   - Фотографий на сессию: ~{num_snapshots}")
-            print(f"   - Bucket MinIO: {minio_service.bucket_name}")
+            print(f"   - Bucket S3: {s3_service.bucket_name}")
             print(f"\n💡 Теперь можно сгенерировать PDF-отчет:")
             print(f"   curl -H 'Authorization: Bearer TOKEN' http://localhost:8000/api/v1/proctoring/1/report -o report.pdf")
             
@@ -243,13 +237,13 @@ async def clear_test_snapshots():
             
             # Удаляем каждый snapshot
             for snapshot_id, object_key in snapshots:
-                # Удаляем из MinIO
+                # Удаляем из S3 асинхронно
                 try:
-                    minio_service.delete_snapshot(object_key)
+                    await s3_service.delete_snapshot(object_key)
                     deleted_from_minio += 1
-                    print(f"  ✓ Удалено из MinIO: {object_key}")
+                    print(f"  ✓ Удалено из S3: {object_key}")
                 except Exception as e:
-                    print(f"  ⚠️  Не удалось удалить из MinIO: {object_key} ({e})")
+                    print(f"  ⚠️  Не удалось удалить из S3: {object_key} ({e})")
             
             # Удаляем все записи из БД
             await session.execute(text("DELETE FROM proctoring_snapshot"))
@@ -257,7 +251,7 @@ async def clear_test_snapshots():
             deleted_from_db = len(snapshots)
             
             print(f"\n✅ Удаление завершено!")
-            print(f"   - Из MinIO: {deleted_from_minio}")
+            print(f"   - Из S3: {deleted_from_minio}")
             print(f"   - Из БД: {deleted_from_db}")
             
         except Exception as e:

@@ -1,4 +1,3 @@
-"""Роутер для работы со снимками прокторинга"""
 from fastapi import APIRouter, Depends, Path, UploadFile, Query
 from fastapi.responses import StreamingResponse
 from starlette import status
@@ -66,23 +65,19 @@ async def upload_snapshot(
     proctoring_id: int = Path(alias="proctoringId"),
     image: UploadFile = None,
     violation_type: str | None = Query(None, alias="violationType"),
-    violation_severity: str | None = Query(None, alias="violationSeverity"),
-    description: str | None = Query(None),
     snapshot_service: SnapshotService = Depends(snapshot_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> SnapshotItemSchema:
     """
-    Загрузить новый снимок для сессии прокторинга
+    Загрузить новый снимок нарушения для сессии прокторинга
     
-    Загружает изображение в MinIO и сохраняет метаданные в БД
+    Загружает изображение в S3/MinIO и сохраняет метаданные в БД
     """
     return await snapshot_service.upload_snapshot(
         user=user,
         proctoring_id=proctoring_id,
         image=image,
-        violation_type=violation_type,
-        violation_severity=violation_severity,
-        description=description
+        violation_type=violation_type
     )
 
 

@@ -1,4 +1,3 @@
-"""DB сервис для работы со снимками прокторинга"""
 from datetime import datetime
 
 from sqlalchemy import select, insert, delete, and_
@@ -18,13 +17,7 @@ class SnapshotDBService(BaseDBService):
         proctoring_id: int,
         bucket_name: str,
         object_key: str,
-        file_size: int,
-        content_type: str,
-        timestamp: datetime,
         violation_type: str | None = None,
-        violation_severity: str | None = None,
-        description: str | None = None,
-        is_violation: bool = False,
         metadata_json: dict | None = None
     ) -> ProctoringSnapshotDB:
         """Создает новый снимок в БД"""
@@ -33,14 +26,7 @@ class SnapshotDBService(BaseDBService):
                 proctoring_id=proctoring_id,
                 bucket_name=bucket_name,
                 object_key=object_key,
-                file_size=file_size,
-                content_type=content_type,
-                timestamp=timestamp,
-                uploaded_at=datetime.now(),
                 violation_type=violation_type,
-                violation_severity=violation_severity,
-                description=description,
-                is_violation=is_violation,
                 metadata_json=metadata_json
             ).returning(ProctoringSnapshotDB)
             
@@ -63,7 +49,7 @@ class SnapshotDBService(BaseDBService):
             result = await sess.execute(
                 select(ProctoringSnapshotDB)
                 .where(ProctoringSnapshotDB.proctoring_id == proctoring_id)
-                .order_by(ProctoringSnapshotDB.timestamp)
+                .order_by(ProctoringSnapshotDB.created_at)
             )
             return result.scalars().all()
     
@@ -77,19 +63,16 @@ class SnapshotDBService(BaseDBService):
             if filters.proctoring_id is not None:
                 conditions.append(ProctoringSnapshotDB.proctoring_id == filters.proctoring_id)
             
-            if filters.is_violation is not None:
-                conditions.append(ProctoringSnapshotDB.is_violation == filters.is_violation)
-            
             if filters.violation_type is not None:
                 conditions.append(ProctoringSnapshotDB.violation_type == filters.violation_type)
             
             if filters.date_from is not None:
-                conditions.append(ProctoringSnapshotDB.timestamp >= filters.date_from)
+                conditions.append(ProctoringSnapshotDB.created_at >= filters.date_from)
             
             if filters.date_to is not None:
-                conditions.append(ProctoringSnapshotDB.timestamp <= filters.date_to)
+                conditions.append(ProctoringSnapshotDB.created_at <= filters.date_to)
             
-            stmt = select(ProctoringSnapshotDB).order_by(ProctoringSnapshotDB.timestamp)
+            stmt = select(ProctoringSnapshotDB).order_by(ProctoringSnapshotDB.created_at)
             
             if conditions:
                 stmt = stmt.where(and_(*conditions))

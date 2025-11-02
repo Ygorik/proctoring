@@ -121,6 +121,7 @@ scipy==1.14.1
 sentencepiece==0.2.0
 six==1.16.0
 sounddevice==0.5.1
-minio==7.2.9
+aioboto3==13.2.0
+types-aioboto3[s3]==13.2.0
 reportlab==4.2.5
 urllib3==1.26.15

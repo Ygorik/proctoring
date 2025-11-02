@@ -5,7 +5,7 @@ from typing import BinaryIO
 from fastapi import UploadFile
 
 from src.services.snapshot.db_service import SnapshotDBService
-from src.services.snapshot.minio_service import minio_service
+from src.services.snapshot.s3_service import s3_service
 from src.services.snapshot.pdf_report_service import pdf_report_service
 from src.services.snapshot.schemas import (
     SnapshotItemSchema,
@@ -58,12 +58,9 @@ class SnapshotService:
             SnapshotItemSchema.model_validate(snapshot) for snapshot in snapshots
         ]
         
-        violations_count = sum(1 for s in snapshots if s.is_violation)
-        
         return SnapshotListSchema(
             snapshots=snapshot_items,
-            total_count=len(snapshots),
-            violations_count=violations_count
+            total_count=len(snapshots)
         )
     
     @check_read_rights
@@ -74,7 +71,7 @@ class SnapshotService:
         )
         
         if not snapshot:
-            raise SnapshotNotFoundError
+            raise SnapshotNotFoundError()
         
         return SnapshotItemSchema.model_validate(snapshot)
     
@@ -85,13 +82,11 @@ class SnapshotService:
         proctoring_id: int,
         image: UploadFile,
         violation_type: str | None = None,
-        violation_severity: str | None = None,
-        description: str | None = None,
     ) -> SnapshotItemSchema:
-        """Загружает новый снимок"""
+        """Загружает новый снимок нарушения"""
         # Проверяем формат файла
         if not image.content_type or not image.content_type.startswith("image/"):
-            raise InvalidImageFormatError
+            raise InvalidImageFormatError()
         
         # Проверяем существование сессии прокторинга
         proctoring = await self.proctoring_db_service.get_proctoring_by_id(
@@ -104,41 +99,35 @@ class SnapshotService:
         image_bytes = await image.read()
         timestamp = datetime.now()
         
-        # Генерируем ключ для MinIO
-        object_key = minio_service.generate_object_key(
+        # Генерируем ключ для S3
+        object_key = s3_service.generate_object_key(
             user_id=proctoring.user_id,
             proctoring_id=proctoring_id,
             timestamp=timestamp,
             violation_type=violation_type
         )
         
-        # Загружаем в MinIO
+        # Загружаем в S3 асинхронно
         try:
-            object_key, file_size = minio_service.upload_snapshot(
+            object_key, file_size = await s3_service.upload_snapshot(
                 file_data=image_bytes,
                 object_key=object_key,
                 content_type=image.content_type
             )
         except Exception as e:
-            raise SnapshotUploadError(f"Failed to upload to MinIO: {str(e)}")
+            raise SnapshotUploadError(message=f"Не удалось загрузить снимок: {str(e)}")
         
         # Сохраняем метаданные в БД
-        is_violation = violation_type is not None
-        
         snapshot = await self.snapshot_db_service.insert_snapshot(
             proctoring_id=proctoring_id,
-            bucket_name=minio_service.bucket_name,
+            bucket_name=s3_service.bucket_name,
             object_key=object_key,
-            file_size=file_size,
-            content_type=image.content_type,
-            timestamp=timestamp,
             violation_type=violation_type,
-            violation_severity=violation_severity,
-            description=description,
-            is_violation=is_violation,
             metadata_json={
                 "user_id": proctoring.user_id,
                 "original_filename": image.filename,
+                "file_size": file_size,
+                "content_type": image.content_type,
             }
         )
         
@@ -152,14 +141,14 @@ class SnapshotService:
         )
         
         if not snapshot:
-            raise SnapshotNotFoundError
+            raise SnapshotNotFoundError()
         
-        # Удаляем из MinIO
+        # Удаляем из S3 асинхронно
         try:
-            minio_service.delete_snapshot(snapshot.object_key)
+            await s3_service.delete_snapshot(snapshot.object_key)
         except Exception as e:
             # Логируем ошибку, но продолжаем удаление из БД
-            print(f"Warning: Failed to delete from MinIO: {str(e)}")
+            print(f"Warning: Failed to delete from S3: {str(e)}")
         
         # Удаляем из БД
         await self.snapshot_db_service.delete_snapshot(snapshot_id=snapshot_id)

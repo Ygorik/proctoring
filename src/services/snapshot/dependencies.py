@@ -1,4 +1,3 @@
-"""Dependencies для snapshot сервиса"""
 from typing import Annotated
 
 from fastapi import Depends
