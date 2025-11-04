@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
@@ -15,12 +16,10 @@ class BaseDBService:
         self.session = session
 
     @asynccontextmanager
-    async def get_async_session(self) -> AsyncSession:
-        try:
-            async with self.session() as async_sess:
+    async def get_async_session(self) -> AsyncGenerator[AsyncSession, None]:
+        async with self.session() as async_sess:
+            try:
                 yield async_sess
-        except Exception:
-            await async_sess.rollback()
-            raise
-        finally:
-            await async_sess.close()
+            except Exception:
+                await async_sess.rollback()
+                raise

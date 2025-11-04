@@ -24,17 +24,17 @@ class PatchSubjectSchema(BaseResponseSchemas):
 
 class AssignSubjectSchema(BaseResponseSchemas):
     subject_id: int
-    user_id: int
+    user_id: str
 
 
 class UnassignSubjectSchema(BaseResponseSchemas):
     subject_id: int
-    user_id: int
+    user_id: str
 
 
 class SubjectFilters:
     def __init__(
         self,
-        user_id: int | None = Query(default=None, alias="userId"),
+        user_id: str | None = Query(default=None, alias="userId"),
     ):
         self.user_id = user_id

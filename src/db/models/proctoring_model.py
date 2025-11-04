@@ -7,10 +7,13 @@ from src.db.models.base_model import BaseDBMixin, BaseDB
 class ProctoringDB(BaseDB, BaseDBMixin):
     __tablename__ = "proctoring"
 
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("user.id"))
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     type_id: Mapped[int] = mapped_column(ForeignKey("proctoring_type.id"))
     result_id: Mapped[int] = mapped_column(ForeignKey("proctoring_result.id"))
+    quiz_id: Mapped[int] = mapped_column(ForeignKey("quiz.id"))
+
+    attempt_id: Mapped[int]
 
     user: Mapped["UserDB"] = relationship(back_populates="proctoring")
     subject: Mapped["SubjectDB"] = relationship(back_populates="proctoring")
@@ -20,7 +23,7 @@ class ProctoringDB(BaseDB, BaseDBMixin):
     proctoring_result: Mapped["ProctoringResultDB"] = relationship(
         back_populates="proctoring"
     )
-
+    quiz: Mapped["QuizDB"] = relationship(back_populates="proctoring")
 
 class ProctoringTypeDB(BaseDB, BaseDBMixin):
     __tablename__ = "proctoring_type"

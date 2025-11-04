@@ -1,13 +1,16 @@
 from fastapi import Query
 
 from src.base_schemas import BaseResponseSchemas
+from src.services.quiz.schemas import CreateQuizSchema
 from src.services.subject.schemas import CreateSubjectSchema
 
 
 class CreateProctoringSchema(BaseResponseSchemas):
-    user_id: int
+    user_id: str
     subject_id: int
     type_id: int
+    quiz_id: int
+    attempt_id: int
 
 
 class InsertProctoringSchema(CreateProctoringSchema):
@@ -52,7 +55,7 @@ class ProctoringItemSchema(BaseResponseSchemas):
 
 
 class PatchProctoringSchema(BaseResponseSchemas):
-    user_id: int
+    user_id: str
     subject_id: int
     type_id: int
 
@@ -60,7 +63,7 @@ class PatchProctoringSchema(BaseResponseSchemas):
 class ProctoringFilters:
     def __init__(
         self,
-        user_id: int | None = Query(default=None, alias="userId"),
+        user_id: str | None = Query(default=None, alias="userId"),
         subject_id: int | None = Query(default=None, alias="subjectId"),
         type_id: int | None = Query(default=None, alias="typeId"),
     ):
@@ -71,18 +74,14 @@ class ProctoringFilters:
 
 class SampleUser(BaseResponseSchemas):
     id: str
-    name: str
+    full_name: str
 
-
-class SampleTest(BaseResponseSchemas):
-    id: str
-    name: str
 
 
 class SampleData(BaseResponseSchemas):
     user: SampleUser
     subject: CreateSubjectSchema
-    test: SampleTest
+    quiz: CreateQuizSchema
     type_id: int | None = None
     attempt: int
     preflight_id: int

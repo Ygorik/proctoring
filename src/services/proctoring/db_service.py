@@ -145,4 +145,4 @@ class ProctoringDBService(BaseDBService):
 
     async def get_default_proctoring_type_id(self) -> int | None:
         async with self.get_async_session() as sess:
-            return sess.scalar(select(ProctoringTypeDB).where(ProctoringTypeDB.default.is_(True)))
+            return await sess.scalar(select(ProctoringTypeDB.id).where(ProctoringTypeDB.default.is_(True)))

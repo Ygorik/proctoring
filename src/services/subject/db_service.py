@@ -79,7 +79,3 @@ class SubjectDBService(BaseDBService):
                 )
             )
             await sess.commit()
-
-    async def get_subject_by_name(self, *, name: str) -> SubjectDB | None:
-        async with self.get_async_session() as sess:
-            return await sess.scalar(select(SubjectDB).where(SubjectDB.name == name))

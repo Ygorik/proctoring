@@ -17,6 +17,8 @@ from src.services.proctoring.schemas import (
     SampleUser,
 )
 from src.services.proctoring_result.db_service import ProctoringResultDBService
+from src.services.quiz.db_service import QuizDBService
+from src.services.quiz.schemas import CreateQuizSchema
 from src.services.subject.db_service import SubjectDBService
 from src.services.subject.exceptions import SubjectNotFoundError
 from src.services.subject.schemas import SubjectSchema, CreateSubjectSchema
@@ -39,11 +41,13 @@ class ProctoringService:
         user_db_service: UserDBService,
         subject_db_service: SubjectDBService,
         proctoring_result_db_service: ProctoringResultDBService,
+        quiz_db_service: QuizDBService,
     ) -> None:
         self.proctoring_db_service = proctoring_db_service
         self.user_db_service = user_db_service
         self.subject_db_service = subject_db_service
         self.proctoring_result_db_service = proctoring_result_db_service
+        self.quiz_db_service = quiz_db_service
 
     @check_create_rights
     async def create_proctoring_type(
@@ -168,7 +172,7 @@ class ProctoringService:
             )
         raise ProctoringNotFoundError
 
-    async def get_user_by_id_if_exist(self, *, user_id: int) -> UserItem:
+    async def get_user_by_id_if_exist(self, *, user_id: str) -> UserItem:
         if user := await self.user_db_service.get_user_by_id(user_id=user_id):
             return user
         raise UserNotFoundError
@@ -182,8 +186,9 @@ class ProctoringService:
 
 
     async def upload_sample(self, *, sample_data: SampleData) -> int:
-        user_id = await self._get_user_id(user_data=sample_data.user)
-        subject_id = await self._get_subject_id(subject_data=sample_data.subject)
+        user_id = await self._create_student_if_not_exist(user_data=sample_data.user)
+        subject_id = await self._create_subject_if_not_exist(subject_data=sample_data.subject)
+        quiz_id = await self._create_quiz_if_not_exist(quiz_data=sample_data.quiz)
 
         type_id = sample_data.type_id or await self.proctoring_db_service.get_default_proctoring_type_id()
 
@@ -195,22 +200,30 @@ class ProctoringService:
                 user_id=user_id,
                 subject_id=subject_id,
                 type_id=type_id,
+                quiz_id=quiz_id,
+                attempt_id=sample_data.attempt,
             )
         )
 
         return proctoring_id
 
-    async def _get_user_id(self, *, user_data: SampleUser) -> int:
-        if user := await self.user_db_service.get_user_by_name(name=user_data.name):
-            return user.id
+    async def _create_student_if_not_exist(self, *, user_data: SampleUser) -> str:
+        if await self.user_db_service.get_user_by_id(user_id=user_data.id):
+            return user_data.id
 
         return await self.user_db_service.create_student_user(user_data=user_data)
 
-    async def _get_subject_id(self, *, subject_data: CreateSubjectSchema) -> int:
-        if subject := await self.subject_db_service.get_subject_by_name(name=subject_data.name):
-            return subject.id
+    async def _create_subject_if_not_exist(self, *, subject_data: CreateSubjectSchema) -> int:
+        if subject_data.id and await self.subject_db_service.get_subject_by_id(subject_id=subject_data.id):
+            return subject_data.id
 
         return await self.subject_db_service.insert_subject(subject_data=subject_data)
+
+    async def _create_quiz_if_not_exist(self, *, quiz_data: CreateQuizSchema) -> int:
+        if await self.quiz_db_service.get_quiz_by_id(quiz_id=quiz_data.id):
+            return quiz_data.id
+
+        return await self.quiz_db_service.insert_quiz(quiz_data=quiz_data)
 
     async def check_image(self, *, proctoring_id: int, image: UploadFile) -> None:
         if image.content_type.split("/")[0] != "image":

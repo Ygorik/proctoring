@@ -129,7 +129,7 @@ async def delete_proctoring(
     )
 
 
-@router.post("/upload-sample", status_code=status.HTTP_201_CREATED)
+@router.post("/upload-sample", status_code=status.HTTP_201_CREATED, dependencies=[Depends(check_moodle_token)])
 async def upload_sample(
     sample_data: SampleData,
     proctoring_service: ProctoringService = Depends(proctoring_service_dependency),

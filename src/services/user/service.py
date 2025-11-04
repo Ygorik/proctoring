@@ -64,11 +64,11 @@ class UserService:
         ]
 
     @check_read_rights
-    async def get_user_by_id(self, *, user_id: int) -> UserItem:
+    async def get_user_by_id(self, *, user_id: str) -> UserItem:
         return await self.get_user_by_id_if_exist(user_id=user_id)
 
     @check_update_rights
-    async def patch_user_by_id(self, *, user_id: int, user_data: PatchUserData) -> None:
+    async def patch_user_by_id(self, *, user_id: str, user_data: PatchUserData) -> None:
         if user_data.password:
             user_data.hashed_password = self.cryptographer.encrypt(user_data.password)
 
@@ -84,11 +84,11 @@ class UserService:
         )
 
     @check_delete_rights
-    async def delete_user_by_id(self, *, user_id: int) -> None:
+    async def delete_user_by_id(self, *, user_id: str) -> None:
         await self.get_user_by_id_if_exist(user_id=user_id)
         await self.user_db_service.delete_user_by_id(user_id=user_id)
 
-    async def get_user_by_id_if_exist(self, *, user_id: int):
+    async def get_user_by_id_if_exist(self, *, user_id: str):
         if user := await self.user_db_service.get_user_by_id(user_id=user_id):
             return user
         raise UserNotFoundError
