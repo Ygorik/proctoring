@@ -33,10 +33,6 @@ def upgrade() -> None:
     op.drop_column('proctoring_snapshot', 'violation_severity')
     op.drop_column('proctoring_snapshot', 'description')
     op.drop_column('proctoring_snapshot', 'is_violation')
-    
-    # Удаляем старые индексы
-    op.drop_index('ix_proctoring_snapshot_timestamp', table_name='proctoring_snapshot')
-    op.drop_index('ix_proctoring_snapshot_is_violation', table_name='proctoring_snapshot')
 
 
 def downgrade() -> None:
@@ -47,7 +43,3 @@ def downgrade() -> None:
     op.add_column('proctoring_snapshot', sa.Column('violation_severity', sa.String(), nullable=True))
     op.add_column('proctoring_snapshot', sa.Column('description', sa.String(), nullable=True))
     op.add_column('proctoring_snapshot', sa.Column('is_violation', sa.Boolean(), nullable=False, server_default='FALSE'))
-    
-    # Восстанавливаем индексы
-    op.create_index('ix_proctoring_snapshot_timestamp', 'proctoring_snapshot', ['timestamp'])
-    op.create_index('ix_proctoring_snapshot_is_violation', 'proctoring_snapshot', ['is_violation'])

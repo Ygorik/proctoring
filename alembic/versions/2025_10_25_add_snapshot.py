@@ -40,18 +40,14 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['proctoring_id'], ['proctoring.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Создаем индексы для оптимизации запросов
     op.create_index('ix_proctoring_snapshot_proctoring_id', 'proctoring_snapshot', ['proctoring_id'])
-    op.create_index('ix_proctoring_snapshot_timestamp', 'proctoring_snapshot', ['timestamp'])
-    op.create_index('ix_proctoring_snapshot_is_violation', 'proctoring_snapshot', ['is_violation'])
 
 
 def downgrade() -> None:
     # Удаляем индексы
-    op.drop_index('ix_proctoring_snapshot_is_violation', table_name='proctoring_snapshot')
-    op.drop_index('ix_proctoring_snapshot_timestamp', table_name='proctoring_snapshot')
     op.drop_index('ix_proctoring_snapshot_proctoring_id', table_name='proctoring_snapshot')
-    
+
     # Удаляем таблицу
     op.drop_table('proctoring_snapshot')

@@ -1,7 +1,7 @@
 """Changing tables to meet new requirements
 
-Revision ID: ee75a0f5c2c2
-Revises: 0269e16731d6
+Revision ID: 2025-11-04_changing_tables_to_meet_new_requirements
+Revises: 2025_11_01_simplify_snapshot
 Create Date: 2025-11-04 11:04:09.526531
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ee75a0f5c2c2'
-down_revision: Union[str, None] = '0269e16731d6'
+revision: str = '2025-11-04_changing_tables_to_meet_new_requirements'
+down_revision: Union[str, None] = '2025_11_01_simplify_snapshot'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
