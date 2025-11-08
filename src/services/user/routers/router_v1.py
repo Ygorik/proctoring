@@ -36,7 +36,7 @@ async def get_list_of_users(
 
 @router.get("/{userId}", status_code=status.HTTP_200_OK)
 async def get_user_by_id(
-    user_id: int = Path(alias="userId"),
+    user_id: str = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> UserItem:
@@ -46,7 +46,7 @@ async def get_user_by_id(
 @router.patch("/{userId}", status_code=status.HTTP_200_OK)
 async def patch_user_by_id(
     user_data: PatchUserData,
-    user_id: int = Path(alias="userId"),
+    user_id: str = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:
@@ -55,7 +55,7 @@ async def patch_user_by_id(
 
 @router.delete("/{userId}", status_code=status.HTTP_200_OK)
 async def delete_user_by_id(
-    user_id: int = Path(alias="userId"),
+    user_id: str = Path(alias="userId"),
     user_service: UserService = Depends(user_service_dependency),
     user: User = Depends(decode_user_token),
 ) -> None:

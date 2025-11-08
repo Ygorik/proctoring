@@ -1,15 +1,17 @@
 from sqlalchemy import select, insert, update, delete, Select
 from sqlalchemy.orm import load_only, selectinload
 
+from src.services.proctoring.schemas import SampleUser
 from src.services.user.schemas import (
     RegisterData,
-    UserItemForList,
     UserItem,
     PatchUserData,
     UserFilters,
 )
 from src.db.base_db_service import BaseDBService
 from src.db.models import UserDB, RoleDB, SubjectUserDB
+
+STUDENT_ROLE_NAME = "STUDENT"
 
 
 class UserDBService(BaseDBService):
@@ -66,7 +68,7 @@ class UserDBService(BaseDBService):
                 .where(UserDB.id == user_id)
             )
 
-    async def patch_user_by_id(self, *, user_id: int, user_data: PatchUserData) -> None:
+    async def patch_user_by_id(self, *, user_id: str, user_data: PatchUserData) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(
                 update(UserDB)
@@ -77,7 +79,16 @@ class UserDBService(BaseDBService):
             )
             await sess.commit()
 
-    async def delete_user_by_id(self, *, user_id: int) -> None:
+    async def delete_user_by_id(self, *, user_id: str) -> None:
         async with self.get_async_session() as sess:
             await sess.execute(delete(UserDB).where(UserDB.id == user_id))
             await sess.commit()
+
+    async def create_student_user(self, *, user_data: SampleUser) -> str:
+        async with self.get_async_session() as sess:
+            student_role_id = await sess.scalar(select(RoleDB.id).where(RoleDB.name == STUDENT_ROLE_NAME))
+            await sess.execute(
+                insert(UserDB).values(**user_data.model_dump(exclude_none=True), role_id=student_role_id)
+            )
+            await sess.commit()
+        return user_data.id
