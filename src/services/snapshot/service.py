@@ -81,7 +81,7 @@ class SnapshotService:
     async def create_snapshot(
         self,
         *,
-        proctoring_id: int,
+        proctoring_id: int | None = None,
         image: UploadFile,
         violation_type: str | None = None,
         user_id: int,
