@@ -14,7 +14,7 @@ class SnapshotCreateSchema(BaseResponseSchemas):
 class SnapshotItemSchema(BaseResponseSchemas):
     """Схема для отображения снимка"""
     id: int
-    proctoring_id: int
+    proctoring_id: int | None
     bucket_name: str
     object_key: str
     violation_type: str | None

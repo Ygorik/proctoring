@@ -1,14 +1,18 @@
+from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.models.base_model import BaseDBMixin, BaseDB
+
+if TYPE_CHECKING:
+    from src.db.models.proctoring_model import ProctoringDB
 
 
 class ProctoringSnapshotDB(BaseDB, BaseDBMixin):
     """Модель для хранения метаданных снимков нарушений при прокторинге"""
     __tablename__ = "proctoring_snapshot"
 
-    proctoring_id: Mapped[int] = mapped_column(ForeignKey("proctoring.id", ondelete="CASCADE"))
+    proctoring_id: Mapped[int | None] = mapped_column(ForeignKey("proctoring.id", ondelete="CASCADE"), nullable=True)
     
     # S3/MinIO информация
     bucket_name: Mapped[str]  # Название bucket в хранилище

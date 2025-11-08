@@ -14,7 +14,7 @@ class SnapshotDBService(BaseDBService):
     async def insert_snapshot(
         self,
         *,
-        proctoring_id: int,
+        proctoring_id: int | None = None,
         bucket_name: str,
         object_key: str,
         violation_type: str | None = None
