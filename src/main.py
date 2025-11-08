@@ -10,7 +10,8 @@ from src.services.proctoring.routers.router_v1 import router as proctoring_route
 from src.services.proctoring_result.routers.router_v1 import (
     router as proctoring_result_router,
 )
-from src.services.snapshot.routers.router_v1 import router as snapshot_router
+from src.services.snapshot.routers.router_proctoring import router as snapshot_proctoring_router
+from src.services.snapshot.routers.router_snapshots import router as snapshot_router
 
 
 app = FastAPI()
@@ -47,7 +48,12 @@ app.include_router(
     tags=["Proctoring | Result"],
 )
 app.include_router(
-    snapshot_router, 
-    prefix="/api/v1/proctoring",  # Используем тот же префикс для единообразия
+    snapshot_proctoring_router, 
+    prefix="/api/v1/proctoring",
     tags=["Proctoring | Snapshots"]
+)
+app.include_router(
+    snapshot_router, 
+    prefix="/api/v1",
+    tags=["Snapshots"]
 )

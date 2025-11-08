@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import select, insert, delete, and_
+from sqlalchemy import select, insert, delete, and_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db.base_db_service import BaseDBService
@@ -77,6 +77,37 @@ class SnapshotDBService(BaseDBService):
             
             result = await sess.execute(stmt)
             return result.scalars().all()
+    
+    async def update_snapshot(
+        self,
+        *,
+        snapshot_id: int,
+        proctoring_id: int | None = None,
+        violation_type: str | None = None
+    ) -> ProctoringSnapshotDB | None:
+        """Обновляет снимок в БД"""
+        async with self.get_async_session() as sess:
+            update_data = {}
+            
+            if proctoring_id is not None:
+                update_data['proctoring_id'] = proctoring_id
+            
+            if violation_type is not None:
+                update_data['violation_type'] = violation_type
+            
+            if not update_data:
+                return await self.get_snapshot_by_id(snapshot_id=snapshot_id)
+            
+            stmt = (
+                update(ProctoringSnapshotDB)
+                .where(ProctoringSnapshotDB.id == snapshot_id)
+                .values(**update_data)
+                .returning(ProctoringSnapshotDB)
+            )
+            
+            result = await sess.execute(stmt)
+            await sess.commit()
+            return result.scalar_one_or_none()
     
     async def delete_snapshot(self, *, snapshot_id: int) -> None:
         """Удаляет снимок из БД"""

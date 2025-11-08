@@ -6,7 +6,7 @@ from httpx import AsyncClient
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.db.models import BaseDB, UserDB, ProfileDB
+from src.db.models import BaseDB, UserDB
 from src.db.base_db_service import Session
 from src.main import app
 
@@ -53,14 +53,9 @@ async def create_user():
                 email="used_email@mail.com",
                 phone_number="78005553535",
                 hashed_password="gAAAAABm2HMzAygNYS4qWUgBklY7MrvjMnH0Svo__0DUyKHTCRdQzSElkiYN93eNJdQsVJmTO4-rZFcZz_yC52iABMcDvdpJ3A==",
+                nickname="used_nickname",
             )
             .returning(UserDB.id)
-        )
-
-        await sess.execute(
-            insert(ProfileDB)
-            .values(nickname="used_nickname", user_id=user_id)
-            .returning(ProfileDB)
         )
 
 
