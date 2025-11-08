@@ -117,18 +117,12 @@ class SnapshotService:
         except Exception as e:
             raise SnapshotUploadError(message=f"Не удалось загрузить снимок: {str(e)}")
         
-        # Сохраняем метаданные в БД
+        # Сохраняем только ссылку на файл в БД
         snapshot = await self.snapshot_db_service.insert_snapshot(
             proctoring_id=proctoring_id,
             bucket_name=s3_service.bucket_name,
             object_key=object_key,
-            violation_type=violation_type,
-            metadata_json={
-                "user_id": proctoring.user_id,
-                "original_filename": image.filename,
-                "file_size": file_size,
-                "content_type": image.content_type,
-            }
+            violation_type=violation_type
         )
         
         return SnapshotItemSchema.model_validate(snapshot)

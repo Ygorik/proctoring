@@ -9,17 +9,16 @@ class SnapshotCreateSchema(BaseResponseSchemas):
     """Схема для создания нового снимка"""
     proctoring_id: int = Field(..., description="ID сессии прокторинга")
     violation_type: str | None = Field(None, description="Тип нарушения")
-    metadata_json: dict | None = Field(None, description="Дополнительные метаданные")
 
 
 class SnapshotItemSchema(BaseResponseSchemas):
     """Схема для отображения снимка"""
     id: int
     proctoring_id: int
+    bucket_name: str
     object_key: str
     violation_type: str | None
     created_at: datetime
-    metadata_json: dict | None
 
 
 class SnapshotListSchema(BaseResponseSchemas):

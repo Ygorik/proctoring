@@ -11,6 +11,9 @@ class ProctoringDB(BaseDB, BaseDBMixin):
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     type_id: Mapped[int] = mapped_column(ForeignKey("proctoring_type.id"))
     result_id: Mapped[int] = mapped_column(ForeignKey("proctoring_result.id"))
+    first_photo_id: Mapped[int | None] = mapped_column(
+        ForeignKey("proctoring_snapshot.id", ondelete="SET NULL"), nullable=True
+    )
 
     user: Mapped["UserDB"] = relationship(back_populates="proctoring")
     subject: Mapped["SubjectDB"] = relationship(back_populates="proctoring")
@@ -21,7 +24,9 @@ class ProctoringDB(BaseDB, BaseDBMixin):
         back_populates="proctoring"
     )
     snapshots: Mapped[list["ProctoringSnapshotDB"]] = relationship(
-        back_populates="proctoring", cascade="all, delete-orphan"
+        primaryjoin="ProctoringDB.id == foreign(ProctoringSnapshotDB.proctoring_id)",
+        back_populates="proctoring",
+        cascade="all, delete-orphan",
     )
 
 

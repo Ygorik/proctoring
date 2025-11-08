@@ -3,12 +3,19 @@
 Скрипт для загрузки тестовых фотографий (snapshots) в MinIO и БД
 
 Использование:
-    python scripts/load_test_snapshots.py
-    или через make: make load-test-snapshots
+    python scripts/load_test_snapshots.py                # загрузить случайные + из test_photos/
+    python scripts/load_test_snapshots.py --only-dir     # загрузить только из test_photos/
+    python scripts/load_test_snapshots.py --clear        # удалить все тестовые фотографии
+    
+    или через make:
+    make load-test-snapshots                             # загрузить все
+    make load-test-snapshots-from-dir                    # только из test_photos/
+    make clear-test-snapshots                            # удалить
 """
 import asyncio
 import io
 import os
+import re
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,6 +30,7 @@ from sqlalchemy.orm import sessionmaker
 
 from src.config import settings
 from src.services.snapshot.s3_service import s3_service
+from src.utils.violation_types import get_violation_name
 
 
 def generate_test_image(
@@ -78,6 +86,175 @@ def generate_test_image(
     return img_buffer.getvalue()
 
 
+def parse_filename(filename: str) -> tuple[datetime | None, str | None]:
+    """
+    Парсит имя файла в формате: 2025-10-30_12-27-19_looking_away.jpg
+    
+    Args:
+        filename: Имя файла
+        
+    Returns:
+        tuple: (timestamp, violation_type) или (None, None) если не удалось распарсить
+    """
+    # Паттерн: YYYY-MM-DD_HH-MM-SS_violation_type.jpg
+    pattern = r'^(\d{4})-(\d{2})-(\d{2})_(\d{2})-(\d{2})-(\d{2})_(.+)\.jpe?g$'
+    match = re.match(pattern, filename, re.IGNORECASE)
+    
+    if not match:
+        return None, None
+    
+    year, month, day, hour, minute, second, violation_type = match.groups()
+    
+    try:
+        timestamp = datetime(
+            int(year), int(month), int(day),
+            int(hour), int(minute), int(second)
+        )
+        # Если violation_type = "normal" или "ok", то нарушения нет
+        if violation_type.lower() in ['normal', 'ok', 'none']:
+            violation_type = None
+        
+        return timestamp, violation_type
+    except ValueError:
+        return None, None
+
+
+async def load_snapshots_from_directory():
+    """Загружает фотографии из директории test_photos/ и связывает их с первой сессией прокторинга"""
+    
+    photos_dir = Path(__file__).parent / "test_photos"
+    
+    if not photos_dir.exists():
+        print(f"❌ Директория {photos_dir} не существует!")
+        return
+    
+    # Получаем все файлы изображений
+    image_files = list(photos_dir.glob("*.jpg")) + list(photos_dir.glob("*.jpeg"))
+    
+    if not image_files:
+        print(f"⚠️  В директории {photos_dir} нет файлов изображений (.jpg/.jpeg)")
+        return
+    
+    print(f"📂 Найдено {len(image_files)} файлов в {photos_dir}")
+    
+    # Создаем подключение к БД
+    engine = create_async_engine(settings.db_url, echo=False)
+    async_session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+    
+    async with async_session() as session:
+        try:
+            # Получаем первую сессию прокторинга
+            result = await session.execute(
+                text(
+                    """
+                    SELECT p.id, p.user_id, u.login, s.name as subject_name
+                    FROM proctoring p
+                    JOIN "user" u ON p.user_id = u.id
+                    JOIN subject s ON p.subject_id = s.id
+                    ORDER BY p.id
+                    LIMIT 1;
+                    """
+                )
+            )
+            proctoring_session = result.fetchone()
+            
+            if not proctoring_session:
+                print("⚠️  Нет доступных сессий прокторинга. Сначала запустите load_test_data.py")
+                return
+            
+            proctoring_id, user_id, login, subject_name = proctoring_session
+            print(f"📊 Привязываем фотографии к сессии {proctoring_id} ({login} - {subject_name})")
+            
+            total_uploaded = 0
+            skipped = 0
+            
+            for image_file in sorted(image_files):
+                filename = image_file.name
+                
+                # Парсим имя файла
+                timestamp, violation_type = parse_filename(filename)
+                
+                if timestamp is None:
+                    print(f"  ⚠️  Пропускаем {filename}: неверный формат имени")
+                    skipped += 1
+                    continue
+                
+                print(f"  📷 Загружаем {filename}...", end=" ")
+                print(f"[{timestamp.strftime('%Y-%m-%d %H:%M:%S')}]", end=" ")
+                print(f"[{violation_type or 'normal'}]", end=" ")
+                
+                # Читаем файл
+                try:
+                    with open(image_file, 'rb') as f:
+                        image_data = f.read()
+                except Exception as e:
+                    print(f"✗ Ошибка чтения: {e}")
+                    skipped += 1
+                    continue
+                
+                # Генерируем ключ для S3
+                object_key = s3_service.generate_object_key(
+                    user_id=user_id,
+                    proctoring_id=proctoring_id,
+                    timestamp=timestamp,
+                    violation_type=violation_type
+                )
+                
+                # Загружаем в S3 асинхронно
+                try:
+                    object_key, file_size = await s3_service.upload_snapshot(
+                        file_data=image_data,
+                        object_key=object_key,
+                        content_type="image/jpeg"
+                    )
+                    print(f"✓ S3", end=" ")
+                except Exception as e:
+                    print(f"✗ Ошибка S3: {e}")
+                    skipped += 1
+                    continue
+                
+                # Сохраняем метаданные в БД
+                try:
+                    await session.execute(
+                        text(
+                            """
+                            INSERT INTO proctoring_snapshot 
+                            (proctoring_id, bucket_name, object_key, violation_type)
+                            VALUES 
+                            (:proctoring_id, :bucket_name, :object_key, :violation_type)
+                            """
+                        ),
+                        {
+                            "proctoring_id": proctoring_id,
+                            "bucket_name": s3_service.bucket_name,
+                            "object_key": object_key,
+                            "violation_type": violation_type
+                        }
+                    )
+                    print(f"✓ БД")
+                    total_uploaded += 1
+                except Exception as e:
+                    print(f"✗ Ошибка БД: {e}")
+                    skipped += 1
+                    continue
+            
+            await session.commit()
+            
+            print(f"\n✅ Загрузка завершена!")
+            print(f"   - Загружено: {total_uploaded}")
+            print(f"   - Пропущено: {skipped}")
+            print(f"   - Bucket S3: {s3_service.bucket_name}")
+            
+        except Exception as e:
+            print(f"❌ Ошибка при загрузке фотографий: {e}")
+            await session.rollback()
+            raise
+        finally:
+            await engine.dispose()
+
+
 async def load_test_snapshots():
     """Загружает тестовые фотографии для сессий прокторинга"""
     
@@ -113,9 +290,9 @@ async def load_test_snapshots():
             
             # Типы нарушений и их цвета
             violation_types = [
-                ("looking_away", "Отвод взгляда", (255, 200, 100)),
-                ("extra_person", "Посторонний человек", (255, 100, 100)),
-                ("mouth_opening", "Открытие рта", (200, 150, 255)),
+                ("looking_away", get_violation_name("looking_away"), (255, 200, 100)),
+                ("extra_person", get_violation_name("extra_person"), (255, 100, 100)),
+                ("mouth_opening", get_violation_name("mouth_opening"), (200, 150, 255)),
                 (None, "Нормально", (100, 200, 150)),
             ]
             
@@ -132,7 +309,6 @@ async def load_test_snapshots():
                 for i in range(num_snapshots):
                     # Чередуем нормальные снимки и снимки с нарушениями
                     violation_type, violation_text, color = violation_types[i % len(violation_types)]
-                    is_violation = violation_type is not None
                     
                     # Генерируем временную метку
                     snapshot_time = base_time + timedelta(minutes=i * 5 + proctoring_id)
@@ -170,22 +346,16 @@ async def load_test_snapshots():
                             text(
                                 """
                                 INSERT INTO proctoring_snapshot 
-                                (proctoring_id, bucket_name, object_key, violation_type, metadata_json)
+                                (proctoring_id, bucket_name, object_key, violation_type)
                                 VALUES 
-                                (:proctoring_id, :bucket_name, :object_key, :violation_type, :metadata_json)
+                                (:proctoring_id, :bucket_name, :object_key, :violation_type)
                                 """
                             ),
                             {
                                 "proctoring_id": proctoring_id,
                                 "bucket_name": s3_service.bucket_name,
                                 "object_key": object_key,
-                                "violation_type": violation_type,
-                                "metadata_json": {
-                                    "file_size": file_size,
-                                    "content_type": "image/jpeg",
-                                    "test_description": f"Тестовый снимок: {violation_text}",
-                                    "test_timestamp": snapshot_time.isoformat()
-                                }
+                                "violation_type": violation_type
                             }
                         )
                         print(f"✓ БД")
@@ -262,6 +432,21 @@ async def clear_test_snapshots():
             await engine.dispose()
 
 
+async def load_all_snapshots():
+    """Загружает и случайные фотографии, и фотографии из директории"""
+    # Сначала загружаем случайные сгенерированные
+    await load_test_snapshots()
+    
+    print("\n" + "="*60)
+    
+    # Затем загружаем из директории (если есть файлы)
+    photos_dir = Path(__file__).parent / "test_photos"
+    if photos_dir.exists():
+        image_files = list(photos_dir.glob("*.jpg")) + list(photos_dir.glob("*.jpeg"))
+        if image_files:
+            await load_snapshots_from_directory()
+
+
 if __name__ == "__main__":
     import argparse
     
@@ -271,10 +456,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Удалить тестовые фотографии вместо загрузки"
     )
+    parser.add_argument(
+        "--only-dir",
+        action="store_true",
+        help="Загрузить только фотографии из директории test_photos/ (без генерации случайных)"
+    )
     
     args = parser.parse_args()
     
     if args.clear:
         asyncio.run(clear_test_snapshots())
+    elif args.only_dir:
+        asyncio.run(load_snapshots_from_directory())
     else:
-        asyncio.run(load_test_snapshots())
+        asyncio.run(load_all_snapshots())

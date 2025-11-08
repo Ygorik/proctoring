@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, JSON
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.models.base_model import BaseDBMixin, BaseDB
@@ -17,8 +17,8 @@ class ProctoringSnapshotDB(BaseDB, BaseDBMixin):
     # Информация о нарушении
     violation_type: Mapped[str | None]  # absence_person, extra_person, looking_away, etc.
     
-    # Дополнительные метаданные в JSON (может содержать: user_id, original_filename, confidence, etc.)
-    metadata_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
-    
     # Связи
-    proctoring: Mapped["ProctoringDB"] = relationship(back_populates="snapshots")
+    proctoring: Mapped["ProctoringDB"] = relationship(
+        foreign_keys=[proctoring_id],
+        back_populates="snapshots"
+    )

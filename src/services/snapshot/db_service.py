@@ -17,8 +17,7 @@ class SnapshotDBService(BaseDBService):
         proctoring_id: int,
         bucket_name: str,
         object_key: str,
-        violation_type: str | None = None,
-        metadata_json: dict | None = None
+        violation_type: str | None = None
     ) -> ProctoringSnapshotDB:
         """Создает новый снимок в БД"""
         async with self.get_async_session() as sess:
@@ -26,8 +25,7 @@ class SnapshotDBService(BaseDBService):
                 proctoring_id=proctoring_id,
                 bucket_name=bucket_name,
                 object_key=object_key,
-                violation_type=violation_type,
-                metadata_json=metadata_json
+                violation_type=violation_type
             ).returning(ProctoringSnapshotDB)
             
             result = await sess.execute(stmt)

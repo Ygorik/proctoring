@@ -18,10 +18,11 @@ help: ## Показать справку по доступным команда�
 	@echo "  make test             - Запустить тесты в контейнере"
 	@echo ""
 	@echo "Управление данными:"
-	@echo "  make load-test-data       - Загрузить тестовые данные в БД"
-	@echo "  make clear-test-data      - Удалить тестовые данные из БД"
-	@echo "  make load-test-snapshots  - Загрузить тестовые фотографии (требует load-test-data)"
-	@echo "  make clear-test-snapshots - Удалить тестовые фотографии"
+	@echo "  make load-test-data                - Загрузить тестовые данные в БД"
+	@echo "  make clear-test-data               - Удалить тестовые данные из БД"
+	@echo "  make load-test-snapshots           - Загрузить тестовые фотографии (случайные + из test_photos/)"
+	@echo "  make load-test-snapshots-from-dir  - Загрузить только фотографии из test_photos/"
+	@echo "  make clear-test-snapshots          - Удалить тестовые фотографии"
 
 # Команды для Docker окружения
 build: ## Собрать Docker образы
@@ -55,8 +56,11 @@ load-test-data: ## Загрузить тестовые данные в БД
 clear-test-data: ## Удалить тестовые данные из БД
 	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_data.py --clear
 
-load-test-snapshots: ## Загрузить тестовые фотографии (snapshots)
+load-test-snapshots: ## Загрузить тестовые фотографии (случайные + из test_photos/)
 	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_snapshots.py
+
+load-test-snapshots-from-dir: ## Загрузить только фотографии из test_photos/
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_snapshots.py --only-dir
 
 clear-test-snapshots: ## Удалить тестовые фотографии
 	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_snapshots.py --clear
