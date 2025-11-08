@@ -201,6 +201,7 @@ class PDFReportService:
                 selectinload(ProctoringDB.subject),
                 selectinload(ProctoringDB.proctoring_type),
                 selectinload(ProctoringDB.proctoring_result),
+                selectinload(ProctoringDB.quiz),
             )
         )
         proctoring = (await session.execute(stmt)).scalar_one_or_none()
@@ -254,16 +255,16 @@ class PDFReportService:
         u = data["user"].login if data["user"] else "Не указано"
         subj = data["subject"].name if data["subject"] else "Не указано"
         
-        # TODO: Добавить поля в модель ProctoringDB
-        course = "Не указано"  # data["proctoring"].course if hasattr(data["proctoring"], "course") else "Не указано"
-        quiz = "Не указано"  # data["proctoring"].quiz if hasattr(data["proctoring"], "quiz") else "Не указано"
-        attempt = "Не указано"  # data["proctoring"].attempt if hasattr(data["proctoring"], "attempt") else "Не указано"
+        # Получаем данные из таблицы прокторинга
+        course = "Не указано"  # TODO: Добавить поле в модель ProctoringDB
+        quiz = data["proctoring"].quiz.name if data["proctoring"].quiz else "Не указано"
+        attempt = str(data["proctoring"].attempt) if data["proctoring"].attempt else "Не указано"
         
         # Создаём таблицу с информацией о сессии
         info_data = [
             ["Студент:", u],
             ["Предмет:", subj],
-            ["Курс:", course],
+            # ["Курс:", course],
             ["Тест/Экзамен:", quiz],
             ["Попытка:", attempt],
         ]

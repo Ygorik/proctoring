@@ -13,7 +13,7 @@ class ProctoringDB(BaseDB, BaseDBMixin):
     result_id: Mapped[int] = mapped_column(ForeignKey("proctoring_result.id"))
     quiz_id: Mapped[int] = mapped_column(ForeignKey("quiz.id"))
 
-    attempt_id: Mapped[int]
+    attempt: Mapped[int]
     first_photo_id: Mapped[int | None] = mapped_column(
         ForeignKey("proctoring_snapshot.id", ondelete="SET NULL"), nullable=True
     )

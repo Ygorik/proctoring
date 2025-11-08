@@ -104,14 +104,19 @@ async def load_test_data():
 
             # 0. Создаем роль для обычных пользователей
             print("📝 Создаем роль 'user'...")
-            await session.execute(
-                text(
-                    """
-                    INSERT INTO role (id, name, rights_create, rights_read, rights_update, rights_delete)
-                    VALUES (2, 'user', FALSE, TRUE, FALSE, FALSE);
-                    """
-                )
+            # Проверяем, существует ли роль 'user'
+            result = await session.execute(
+                text("SELECT id FROM role WHERE name = 'user';")
             )
+            if not result.scalar():
+                await session.execute(
+                    text(
+                        """
+                        INSERT INTO role (name, rights_create, rights_read, rights_update, rights_delete)
+                        VALUES ('user', FALSE, TRUE, FALSE, FALSE);
+                        """
+                    )
+                )
 
             # 1. Создаем тестовых пользователей
             print("👤 Создаем тестовых пользователей...")
@@ -220,13 +225,14 @@ async def load_test_data():
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id, attempt)
                     SELECT
                         u.id,
                         s.id,
                         pt.id,
                         pr.id,
-                        q.id
+                        q.id,
+                        1 as attempt
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt
@@ -246,13 +252,14 @@ async def load_test_data():
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id, attempt)
                     SELECT
                         u.id,
                         s.id,
                         pt.id,
                         pr.id,
-                        q.id
+                        q.id,
+                        1 as attempt
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt
@@ -272,13 +279,14 @@ async def load_test_data():
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id, attempt)
                     SELECT
                         u.id,
                         s.id,
                         pt.id,
                         pr.id,
-                        q.id
+                        q.id,
+                        1 as attempt
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt

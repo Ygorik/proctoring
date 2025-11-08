@@ -22,6 +22,7 @@ help: ## Показать справку по доступным команда�
 	@echo "  make clear-test-data               - Удалить тестовые данные из БД"
 	@echo "  make load-test-snapshots           - Загрузить тестовые фотографии (случайные + из test_photos/)"
 	@echo "  make load-test-snapshots-from-dir  - Загрузить только фотографии из test_photos/"
+	@echo "  make load-full-test                - Загрузить все тестовые данные и фотографии (удобная команда)"
 	@echo "  make clear-test-snapshots          - Удалить тестовые фотографии"
 
 # Команды для Docker окружения
@@ -64,3 +65,7 @@ load-test-snapshots-from-dir: ## Загрузить только фотогра�
 
 clear-test-snapshots: ## Удалить тестовые фотографии
 	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_snapshots.py --clear
+
+load-full-test: ## Загрузить полный набор тестовых данных (данные + снимки)
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_data.py
+	docker-compose -f $(COMPOSE_FILE) exec app python scripts/load_test_snapshots.py --only-dir

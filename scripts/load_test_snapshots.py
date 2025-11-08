@@ -445,6 +445,55 @@ async def load_all_snapshots():
         image_files = list(photos_dir.glob("*.jpg")) + list(photos_dir.glob("*.jpeg"))
         if image_files:
             await load_snapshots_from_directory()
+    
+    # После загрузки всех фоток устанавливаем first_photo_id
+    await set_first_photo_for_proctoring()
+
+
+async def set_first_photo_for_proctoring():
+    """Устанавливает first_photo_id в таблице proctoring на первый снимок без нарушений"""
+    engine = create_async_engine(settings.db_url, echo=False)
+    async_session = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
+    
+    try:
+        async with async_session() as session:
+            print("\n🖼️  Устанавливаем идентификационные фотографии...")
+            
+            # Для каждой сессии прокторинга найти первый снимок без нарушений
+            # и установить его как first_photo_id
+            result = await session.execute(
+                text("""
+                    UPDATE proctoring p
+                    SET first_photo_id = (
+                        SELECT id FROM proctoring_snapshot ps
+                        WHERE ps.proctoring_id = p.id 
+                          AND ps.violation_type IS NULL
+                        ORDER BY ps.created_at ASC
+                        LIMIT 1
+                    )
+                    WHERE p.id IN (
+                        SELECT DISTINCT proctoring_id FROM proctoring_snapshot
+                    )
+                """)
+            )
+            
+            await session.commit()
+            
+            # Получаем количество обновленных записей
+            count_result = await session.execute(
+                text("SELECT COUNT(*) FROM proctoring WHERE first_photo_id IS NOT NULL")
+            )
+            count = count_result.scalar()
+            
+            print(f"✅ Установлено {count} идентификационных фотографий")
+            
+    except Exception as e:
+        print(f"❌ Ошибка при установке идентификационных фотографий: {e}")
+        raise
+    finally:
+        await engine.dispose()
 
 
 if __name__ == "__main__":
@@ -468,5 +517,6 @@ if __name__ == "__main__":
         asyncio.run(clear_test_snapshots())
     elif args.only_dir:
         asyncio.run(load_snapshots_from_directory())
+        asyncio.run(set_first_photo_for_proctoring())
     else:
         asyncio.run(load_all_snapshots())

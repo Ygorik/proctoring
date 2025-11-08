@@ -1,7 +1,7 @@
 """add_first_photo_to_proctoring
 
-Revision ID: 2025_11_05_add_first_photo
-Revises: 2025_10_25_add_snapshot
+Revision ID: 2025_11_05_first_photo
+Revises: 2025_11_04_tables_update
 Create Date: 2025-11-05
 
 Добавляет поле first_photo_id в таблицу proctoring для хранения ссылки на фото студента
@@ -13,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '2025_11_05_add_first_photo'
-down_revision: Union[str, None] = '2025_10_25_add_snapshot'
+revision: str = '2025_11_05_first_photo'
+down_revision: Union[str, None] = '2025_11_04_tables_update'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
