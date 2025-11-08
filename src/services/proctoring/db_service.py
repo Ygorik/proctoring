@@ -66,15 +66,16 @@ class ProctoringDBService(BaseDBService):
 
     async def create_proctoring(
         self, *, proctoring_data: CreateProctoringSchema
-    ) -> None:
+    ) -> int:
         async with self.get_async_session() as sess:
             proctoring_result_id = await self.insert_proctoring_result(sess=sess)
             insert_proctoring_data = InsertProctoringSchema(
                 **proctoring_data.model_dump(),
                 result_id=proctoring_result_id,
             )
-            await self.insert_proctoring(sess=sess, proctoring_data=insert_proctoring_data)
+            proctoring_id = await self.insert_proctoring(sess=sess, proctoring_data=insert_proctoring_data)
             await sess.commit()
+        return proctoring_id
 
     @staticmethod
     async def insert_proctoring_result(*, sess: AsyncSession) -> int:
@@ -83,9 +84,9 @@ class ProctoringDBService(BaseDBService):
         )
 
     @staticmethod
-    async def insert_proctoring(*, sess: AsyncSession, proctoring_data: InsertProctoringSchema) -> None:
-        await sess.execute(
-            insert(ProctoringDB).values(proctoring_data.model_dump())
+    async def insert_proctoring(*, sess: AsyncSession, proctoring_data: InsertProctoringSchema) -> int:
+        return await sess.scalar(
+            insert(ProctoringDB).values(proctoring_data.model_dump()).returning(ProctoringDB.id)
         )
 
     async def get_list_of_proctoring(
@@ -143,3 +144,7 @@ class ProctoringDBService(BaseDBService):
                 delete(ProctoringDB).where(ProctoringDB.id == proctoring_id)
             )
             await sess.commit()
+
+    async def get_default_proctoring_type_id(self) -> int | None:
+        async with self.get_async_session() as sess:
+            return await sess.scalar(select(ProctoringTypeDB.id).where(ProctoringTypeDB.default.is_(True)))

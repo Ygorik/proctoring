@@ -24,95 +24,95 @@ from src.utils.cryptographer import Cryptographer
 
 async def load_test_data():
     """Загружает тестовые данные в базу"""
-    
+
     # Создаем подключение к БД
     engine = create_async_engine(settings.db_url, echo=True)
     async_session = sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with async_session() as session:
         try:
             print("🔄 Начинаем загрузку тестовых данных...")
-            
+
             # Сначала удаляем существующие тестовые данные если они есть
             print("🧹 Удаление существующих тестовых данных (если есть)...")
-            
+
             # Удаляем в обратном порядке из-за foreign keys
             await session.execute(
                 text(
                     """
-                    DELETE FROM proctoring 
+                    DELETE FROM proctoring
                     WHERE user_id IN (
-                        SELECT id FROM "user" 
+                        SELECT id FROM "user"
                         WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova')
                     );
                     """
                 )
             )
-            
+
             await session.execute(
                 text("DELETE FROM proctoring_result WHERE id BETWEEN 1 AND 5;")
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM proctoring_type 
+                    DELETE FROM proctoring_type
                     WHERE name IN ('Строгий контроль', 'Стандартный контроль', 'Базовый контроль', 'Минимальный контроль');
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM subject_user 
+                    DELETE FROM subject_user
                     WHERE subject_id IN (
-                        SELECT id FROM subject 
+                        SELECT id FROM subject
                         WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык')
                     );
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM subject 
+                    DELETE FROM subject
                     WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык');
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM "user" 
+                    DELETE FROM "user"
                     WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova');
                     """
                 )
             )
-            
+
             await session.execute(
                 text("DELETE FROM role WHERE name='user';")
             )
-            
+
             # Инициализируем криптографер для паролей
             crypto = Cryptographer(settings.CRYPTO_KEY)
             test_password = crypto.encrypt("Test123!")
-            
+
             # 0. Создаем роль для обычных пользователей
             print("📝 Создаем роль 'user'...")
             await session.execute(
                 text(
                     """
-                    INSERT INTO role (name, rights_create, rights_read, rights_update, rights_delete) 
-                    VALUES ('user', FALSE, TRUE, FALSE, FALSE);
+                    INSERT INTO role (id, name, rights_create, rights_read, rights_update, rights_delete)
+                    VALUES (2, 'user', FALSE, TRUE, FALSE, FALSE);
                     """
                 )
             )
-            
+
             # 1. Создаем тестовых пользователей
             print("👤 Создаем тестовых пользователей...")
             await session.execute(
@@ -127,7 +127,7 @@ async def load_test_data():
                     """
                 ).bindparams(password=test_password)
             )
-            
+
             # 2. Создаем тестовые предметы
             print("📚 Создаем тестовые предметы...")
             await session.execute(
@@ -142,32 +142,32 @@ async def load_test_data():
                     """
                 )
             )
-            
+
             # 3. Привязываем пользователей к предметам
             print("🔗 Привязываем пользователей к предметам...")
             await session.execute(
                 text(
                     """
-                    INSERT INTO subject_user (subject_id, user_id) 
-                    SELECT s.id, u.id 
-                    FROM subject s, "user" u 
+                    INSERT INTO subject_user (subject_id, user_id)
+                    SELECT s.id, u.id
+                    FROM subject s, "user" u
                     WHERE u.login IN ('ivanov', 'petrov') AND s.name = 'Математика'
-                    
+
                     UNION ALL
-                    
-                    SELECT s.id, u.id 
-                    FROM subject s, "user" u 
+
+                    SELECT s.id, u.id
+                    FROM subject s, "user" u
                     WHERE u.login IN ('sidorova', 'kuznetsov') AND s.name = 'Физика'
-                    
+
                     UNION ALL
-                    
-                    SELECT s.id, u.id 
-                    FROM subject s, "user" u 
+
+                    SELECT s.id, u.id
+                    FROM subject s, "user" u
                     WHERE u.login IN ('smirnova', 'ivanov') AND s.name = 'Программирование';
                     """
                 )
             )
-            
+
             # 4. Создаем типы прокторинга
             print("🎯 Создаем типы прокторинга...")
             await session.execute(
@@ -181,7 +181,7 @@ async def load_test_data():
                     """
                 )
             )
-            
+
             # 5. Создаем результаты прокторинга
             print("📊 Создаем результаты прокторинга...")
             await session.execute(
@@ -196,86 +196,111 @@ async def load_test_data():
                     """
                 )
             )
-            
-            # 6. Создаем сессии прокторинга
+
+            # 6. Создаем тестирования
+            print("🎥 Создаем тестирования...")
+
+            await session.execute(
+                text(
+                    """
+                    INSERT INTO quiz (name) VALUES
+                    ('Царица наук: основы математики'),
+                    ('Законы Вселенной: физика вокруг нас'),
+                    ('Искусство кода: введение в программирование'),
+                    ('Путешествие во времени: ключевые события истории'),
+                    ('Глобальный диалог: английский для начинающих');
+                    """
+                )
+            )
+
+            # 7. Создаем сессии прокторинга
             print("🎥 Создаем сессии прокторинга...")
-            
+
             # Сессия 1: Иванов - Математика
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id)
-                    SELECT 
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    SELECT
                         u.id,
                         s.id,
                         pt.id,
-                        pr.id
+                        pr.id,
+                        q.id
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt
                     CROSS JOIN proctoring_result pr
-                    WHERE u.login = 'ivanov' 
-                      AND s.name = 'Математика' 
+                    CROSS JOIN quiz q
+                    WHERE u.login = 'ivanov'
+                      AND s.name = 'Математика'
                       AND pt.name = 'Строгий контроль'
                       AND pr.id = 1
+                      AND q.name = 'Царица наук: основы математики'
                     LIMIT 1;
                     """
                 )
             )
-            
+
             # Сессия 2: Петров - Математика
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id)
-                    SELECT 
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    SELECT
                         u.id,
                         s.id,
                         pt.id,
-                        pr.id
+                        pr.id,
+                        q.id
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt
                     CROSS JOIN proctoring_result pr
-                    WHERE u.login = 'petrov' 
-                      AND s.name = 'Математика' 
+                    CROSS JOIN quiz q
+                    WHERE u.login = 'petrov'
+                      AND s.name = 'Математика'
                       AND pt.name = 'Стандартный контроль'
                       AND pr.id = 2
+                      AND q.name = 'Царица наук: основы математики'
                     LIMIT 1;
                     """
                 )
             )
-            
+
             # Сессия 3: Сидорова - Физика
             await session.execute(
                 text(
                     """
-                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id)
-                    SELECT 
+                    INSERT INTO proctoring (user_id, subject_id, type_id, result_id, quiz_id)
+                    SELECT
                         u.id,
                         s.id,
                         pt.id,
-                        pr.id
+                        pr.id,
+                        q.id
                     FROM "user" u
                     CROSS JOIN subject s
                     CROSS JOIN proctoring_type pt
                     CROSS JOIN proctoring_result pr
-                    WHERE u.login = 'sidorova' 
-                      AND s.name = 'Физика' 
+                    CROSS JOIN quiz q
+                    WHERE u.login = 'sidorova'
+                      AND s.name = 'Физика'
                       AND pt.name = 'Стандартный контроль'
                       AND pr.id = 3
+                      AND q.name = 'Законы Вселенной: физика вокруг нас'
                     LIMIT 1;
                     """
                 )
             )
-            
+
             await session.commit()
-            
+
             print("✅ Тестовые данные успешно загружены!")
             print("\n📋 Созданные тестовые пользователи:")
             print("   Login: ivanov, petrov, sidorova, kuznetsov, smirnova")
             print("   Password: Test123!")
-            
+
         except Exception as e:
             print(f"❌ Ошибка при загрузке данных: {e}")
             await session.rollback()
@@ -286,80 +311,95 @@ async def load_test_data():
 
 async def clear_test_data():
     """Удаляет тестовые данные из базы"""
-    
+
     engine = create_async_engine(settings.db_url, echo=True)
     async_session = sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
-    
+
     async with async_session() as session:
         try:
             print("🔄 Начинаем удаление тестовых данных...")
-            
+
             # Удаляем в обратном порядке из-за foreign keys
             await session.execute(
                 text(
                     """
-                    DELETE FROM proctoring 
+                    DELETE FROM proctoring
                     WHERE user_id IN (
-                        SELECT id FROM "user" 
+                        SELECT id FROM "user"
                         WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova')
                     );
                     """
                 )
             )
-            
+
             await session.execute(
                 text("DELETE FROM proctoring_result WHERE id BETWEEN 1 AND 5;")
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM proctoring_type 
+                    DELETE FROM proctoring_type
                     WHERE name IN ('Строгий контроль', 'Стандартный контроль', 'Базовый контроль', 'Минимальный контроль');
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM subject_user 
+                    DELETE FROM subject_user
                     WHERE subject_id IN (
-                        SELECT id FROM subject 
+                        SELECT id FROM subject
                         WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык')
                     );
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM subject 
+                    DELETE FROM quiz
+                    WHERE name in (
+                    'Царица наук: основы математики',
+                    'Законы Вселенной: физика вокруг нас',
+                    'Искусство кода: введение в программирование',
+                    'Путешествие во времени: ключевые события истории',
+                    'Глобальный диалог: английский для начинающих'
+                    )
+                    """
+                )
+            )
+
+            await session.execute(
+                text(
+                    """
+                    DELETE FROM subject
                     WHERE name IN ('Математика', 'Физика', 'Программирование', 'История', 'Английский язык');
                     """
                 )
             )
-            
+
             await session.execute(
                 text(
                     """
-                    DELETE FROM "user" 
+                    DELETE FROM "user"
                     WHERE login IN ('ivanov', 'petrov', 'sidorova', 'kuznetsov', 'smirnova');
                     """
                 )
             )
-            
+
             await session.execute(
                 text("DELETE FROM role WHERE name='user';")
             )
-            
+
             await session.commit()
-            
+
             print("✅ Тестовые данные успешно удалены!")
-            
+
         except Exception as e:
             print(f"❌ Ошибка при удалении данных: {e}")
             await session.rollback()
@@ -370,16 +410,16 @@ async def clear_test_data():
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Управление тестовыми данными")
     parser.add_argument(
         "--clear",
         action="store_true",
         help="Удалить тестовые данные вместо загрузки"
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.clear:
         asyncio.run(clear_test_data())
     else:

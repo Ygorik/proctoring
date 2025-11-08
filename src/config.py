@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = "minioadmin"
     MINIO_SECURE: bool = False
     MINIO_BUCKET_NAME: str = "proctoring-snapshots"
+    MOODLE_SECRET: str = "MOODLE_SECRET"
+    MOODLE_SECRET_KEY: bytes = b'rkXO1QJ9hAPeQZJ8kzonFU75BjjG8d64zBcEFvg33ew='
 
 
 settings = Settings()

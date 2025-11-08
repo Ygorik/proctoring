@@ -10,10 +10,12 @@ from src.services.proctoring.schemas import (
     CreateProctoringTypeSchema,
     ProctoringItemSchema,
     UpdateProctoringTypeSchema,
-    ProctoringFilters, ProctoringDataSchema,
+    ProctoringFilters,
+    SampleData,
 )
 from src.services.proctoring.service import ProctoringService
 from src.services.token.service import decode_user_token
+from src.utils.moodle_auth import check_moodle_token
 
 router = APIRouter()
 
@@ -127,10 +129,23 @@ async def delete_proctoring(
     )
 
 
-@router.post("/check", status_code=status.HTTP_200_OK)
+@router.post("/create-new-proctoring", status_code=status.HTTP_201_CREATED, dependencies=[Depends(check_moodle_token)])
+async def upload_sample(
+    sample_data: SampleData,
+    proctoring_service: ProctoringService = Depends(proctoring_service_dependency),
+):
+    return await proctoring_service.upload_sample(sample_data=sample_data)
+
+
+
+@router.post("/check", status_code=status.HTTP_200_OK, dependencies=[Depends(check_moodle_token)])
 async def check_image(
     image: UploadFile,
     proctoring_id: int = Query(alias="proctoringId"),
     proctoring_service: ProctoringService = Depends(proctoring_service_dependency),
 ) -> None:
-    return await proctoring_service.check_image(proctoring_id=proctoring_id, image=image)
+
+    return await proctoring_service.check_image(
+        proctoring_id=proctoring_id,
+        image=image,
+    )

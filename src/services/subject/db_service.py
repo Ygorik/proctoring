@@ -14,10 +14,13 @@ from src.services.subject.schemas import (
 
 
 class SubjectDBService(BaseDBService):
-    async def insert_subject(self, *, subject_data: CreateSubjectSchema) -> None:
+    async def insert_subject(self, *, subject_data: CreateSubjectSchema) -> int:
         async with self.get_async_session() as sess:
-            await sess.execute(insert(SubjectDB).values(**subject_data.model_dump()))
+            subject_id = await sess.scalar(
+                insert(SubjectDB).values(**subject_data.model_dump(exclude_none=True)).returning(SubjectDB.id)
+            )
             await sess.commit()
+        return subject_id
 
     async def get_subject_by_id(self, *, subject_id: int) -> SubjectSchema:
         async with self.get_async_session() as sess:

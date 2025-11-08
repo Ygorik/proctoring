@@ -20,13 +20,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     # Создаем таблицу proctoring_snapshot
-    # Удалены избыточные поля:
-    # - file_size, content_type (дублируются в S3 метаданных)
-    # - timestamp, uploaded_at (используется created_at из BaseDBMixin)
-    # - violation_severity (не используется, определяется внешней логикой)
-    # - description (избыточно при наличии violation_type)
-    # - is_violation (избыточно - если есть violation_type, значит есть нарушение)
-    # - metadata_json (избыточно, вся нужная информация в других полях или в S3)
     op.create_table(
         'proctoring_snapshot',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -39,14 +32,17 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['proctoring_id'], ['proctoring.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
+    # Создаем индексы для оптимизации запросов
+
     # Создаем индекс для оптимизации запросов
     op.create_index('ix_proctoring_snapshot_proctoring_id', 'proctoring_snapshot', ['proctoring_id'])
 
 
 def downgrade() -> None:
+    # Удаляем индексы
     # Удаляем индекс
     op.drop_index('ix_proctoring_snapshot_proctoring_id', table_name='proctoring_snapshot')
-    
+
     # Удаляем таблицу
     op.drop_table('proctoring_snapshot')
