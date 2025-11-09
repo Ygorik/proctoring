@@ -88,7 +88,13 @@ class UserService:
         await self.get_user_by_id_if_exist(user_id=user_id)
         await self.user_db_service.delete_user_by_id(user_id=user_id)
 
-    async def get_user_by_id_if_exist(self, *, user_id: str):
-        if user := await self.user_db_service.get_user_by_id(user_id=user_id):
-            return user
+    async def get_user_by_id_if_exist(self, *, user_id: str) -> UserItem:
+        if user_db := await self.user_db_service.get_user_by_id(user_id=user_id):
+            return UserItem(
+                id=user_db.id,
+                full_name=user_db.full_name,
+                login=user_db.login,
+                role_name=user_db.role.name,
+                role=user_db.role,
+            )
         raise UserNotFoundError
