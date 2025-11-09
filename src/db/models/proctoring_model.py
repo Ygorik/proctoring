@@ -7,7 +7,7 @@ from src.db.models.base_model import BaseDBMixin, BaseDB
 class ProctoringDB(BaseDB, BaseDBMixin):
     __tablename__ = "proctoring"
 
-    user_id: Mapped[str] = mapped_column(ForeignKey("user.id"))
+    user_id: Mapped[str] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"))
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
     type_id: Mapped[int] = mapped_column(ForeignKey("proctoring_type.id"))
     result_id: Mapped[int] = mapped_column(ForeignKey("proctoring_result.id"))
