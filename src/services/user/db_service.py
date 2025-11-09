@@ -52,12 +52,19 @@ class UserDBService(BaseDBService):
 
         return stmt
 
-    async def get_user_by_id(self, *, user_id) -> UserItem:
+    async def get_user_by_id(self, *, user_id) -> UserDB:
         async with self.get_async_session() as sess:
             return await sess.scalar(
-                select(UserDB, RoleDB)
+                select(UserDB)
                 .options(
-                    selectinload(UserDB.role),
+                    selectinload(UserDB.role).load_only(
+                        RoleDB.id,
+                        RoleDB.name,
+                        RoleDB.rights_create,
+                        RoleDB.rights_read,
+                        RoleDB.rights_update,
+                        RoleDB.rights_delete,
+                    ),
                     load_only(
                         UserDB.id,
                         UserDB.full_name,
