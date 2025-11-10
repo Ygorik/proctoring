@@ -15,6 +15,7 @@ class SnapshotDBService(BaseDBService):
         self,
         *,
         proctoring_id: int | None = None,
+        proctoring_id: int | None,
         bucket_name: str,
         object_key: str,
         violation_type: str | None = None

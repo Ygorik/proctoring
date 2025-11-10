@@ -7,7 +7,7 @@ from src.base_schemas import BaseResponseSchemas
 
 class SnapshotCreateSchema(BaseResponseSchemas):
     """Схема для создания нового снимка"""
-    proctoring_id: int = Field(..., description="ID сессии прокторинга")
+    proctoring_id: int | None = Field(None, description="ID сессии прокторинга")
     violation_type: str | None = Field(None, description="Тип нарушения")
 
 

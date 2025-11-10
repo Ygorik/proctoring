@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.create_table(
         'proctoring_snapshot',
         sa.Column('id', sa.Integer(), nullable=False),
-        sa.Column('proctoring_id', sa.Integer(), nullable=False),
+        sa.Column('proctoring_id', sa.Integer(), nullable=True),
         sa.Column('bucket_name', sa.String(), nullable=False),
         sa.Column('object_key', sa.String(), nullable=False),
         sa.Column('violation_type', sa.String(), nullable=True),
