@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Query
 from starlette import status
 
 from src.services.authorization.schemas import User
@@ -10,6 +10,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    AssignedSubjectSchema,
     SubjectFilters,
 )
 from src.services.subject.service import SubjectService
@@ -64,6 +65,18 @@ async def unassign_subject_from_user(
     user: User = Depends(decode_user_token),
 ) -> None:
     await service.unassign_subject_from_user(user=user, unassign_data=unassign_data)
+
+
+@router.get("/assignSubject", status_code=status.HTTP_200_OK)
+async def get_assigned_subjects(
+    subject_id: int | None = Query(default=None, alias="subjectId"),
+    user_id: str | None = Query(default=None, alias="userId"),
+    service: SubjectService = Depends(subject_service_dependency),
+    user: User = Depends(decode_user_token),
+) -> list[AssignedSubjectSchema]:
+    return await service.get_assigned_subjects(
+        user=user, subject_id=subject_id, user_id=user_id
+    )
 
 
 @router.get("/{subject_id}", status_code=status.HTTP_200_OK)

@@ -7,6 +7,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    AssignedSubjectSchema,
     SubjectFilters,
 )
 from src.services.user.service import UserService
@@ -74,4 +75,12 @@ class SubjectService:
     ) -> None:
         await self.subject_db_service.unassign_subject_from_user(
             unassign_data=unassign_data
+        )
+
+    @check_read_rights
+    async def get_assigned_subjects(
+        self, *, subject_id: int | None = None, user_id: str | None = None
+    ) -> list[AssignedSubjectSchema]:
+        return await self.subject_db_service.get_assigned_subjects(
+            subject_id=subject_id, user_id=user_id
         )

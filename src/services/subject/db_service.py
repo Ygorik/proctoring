@@ -9,6 +9,7 @@ from src.services.subject.schemas import (
     PatchSubjectSchema,
     AssignSubjectSchema,
     UnassignSubjectSchema,
+    AssignedSubjectSchema,
     SubjectFilters,
 )
 
@@ -79,3 +80,16 @@ class SubjectDBService(BaseDBService):
                 )
             )
             await sess.commit()
+
+    async def get_assigned_subjects(
+        self, *, subject_id: int | None = None, user_id: str | None = None
+    ) -> list[AssignedSubjectSchema]:
+        stmt = select(SubjectUserDB)
+        
+        if subject_id:
+            stmt = stmt.where(SubjectUserDB.subject_id == subject_id)
+        if user_id:
+            stmt = stmt.where(SubjectUserDB.user_id == user_id)
+        
+        async with self.get_async_session() as sess:
+            return await sess.scalars(stmt)

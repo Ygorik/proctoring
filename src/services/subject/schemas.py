@@ -32,6 +32,12 @@ class UnassignSubjectSchema(BaseResponseSchemas):
     user_id: str
 
 
+class AssignedSubjectSchema(BaseResponseSchemas):
+    id: int
+    subject_id: int
+    user_id: str
+
+
 class SubjectFilters:
     def __init__(
         self,
