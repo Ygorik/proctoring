@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.models.base_model import BaseDBMixin, BaseDB
@@ -14,6 +14,10 @@ class SubjectDB(BaseDB, BaseDBMixin):
 
 class SubjectUserDB(BaseDB):
     __tablename__ = "subject_user"
+    __table_args__ = (
+        Index('ix_subject_user_subject_id_user_id', 'subject_id', 'user_id', unique=True),
+        Index('ix_subject_user_user_id', 'user_id'),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     subject_id: Mapped[int] = mapped_column(ForeignKey("subject.id"))
