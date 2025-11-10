@@ -37,6 +37,16 @@ def upgrade() -> None:
     )
 
     op.add_column('proctoring', sa.Column('attempt', sa.Integer(), nullable=False))
+    
+    # Добавляем поле first_photo_id для хранения первой фотографии студента
+    op.add_column('proctoring', sa.Column('first_photo_id', sa.Integer(), nullable=True))
+    op.create_foreign_key(
+        'fk_proctoring_first_photo',
+        'proctoring', 'proctoring_snapshot',
+        ['first_photo_id'], ['id'],
+        ondelete='SET NULL'
+    )
+    
     op.add_column('proctoring_type', sa.Column('default', sa.Boolean(), server_default='FALSE', nullable=False))
 
     op.drop_constraint('authorization_user_id_fkey', 'authorization', type_='foreignkey')
@@ -76,6 +86,10 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_constraint('proctoring_quiz_fk', 'proctoring', type_='foreignkey')
+    
+    # Удаляем внешний ключ и колонку first_photo_id
+    op.drop_constraint('fk_proctoring_first_photo', 'proctoring', type_='foreignkey')
+    op.drop_column('proctoring', 'first_photo_id')
 
     op.drop_column('proctoring_type', 'default')
     op.drop_column('proctoring', 'attempt')

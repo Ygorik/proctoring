@@ -19,7 +19,8 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Создаем таблицу proctoring_snapshot
+    # Создаем таблицу proctoring_snapshot с nullable proctoring_id
+    # (фотография может быть загружена до привязки к прокторингу)
     op.create_table(
         'proctoring_snapshot',
         sa.Column('id', sa.Integer(), nullable=False),
@@ -33,14 +34,11 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
 
-    # Создаем индексы для оптимизации запросов
-
-    # Создаем индекс для оптимизации запросов
+    # Создаем индекс для оптимизации запросов по proctoring_id
     op.create_index('ix_proctoring_snapshot_proctoring_id', 'proctoring_snapshot', ['proctoring_id'])
 
 
 def downgrade() -> None:
-    # Удаляем индексы
     # Удаляем индекс
     op.drop_index('ix_proctoring_snapshot_proctoring_id', table_name='proctoring_snapshot')
 
